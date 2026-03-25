@@ -117,20 +117,30 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   // Attempt to load logo — dynamic require keeps fs out of the module scope
   // so it never interferes with Next.js/Turbopack server bundling
   let logoBase64: string | null = null
+  let logoImgFormat: 'JPEG' | 'PNG' = 'JPEG'
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs') as typeof import('fs')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const path = require('path') as typeof import('path')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const sharp = require('sharp')
     const logoPath = path.join(process.cwd(), 'public', 'images', 'mialab-logo.png')
     const buf = fs.readFileSync(logoPath)
-    logoBase64 = `data:image/png;base64,${buf.toString('base64')}`
+    // Logo displays at 22mm×15mm — resize to 130×90px JPEG to avoid embedding a
+    // 6000px wide raw pixel grid that inflates the PDF to several megabytes.
+    const resized: Buffer = await sharp(buf)
+      .resize(130, 90, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer()
+    logoBase64 = `data:image/jpeg;base64,${resized.toString('base64')}`
+    logoImgFormat = 'JPEG'
   } catch {
     // Logo unavailable — fall back to typographic header
   }
 
   if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', ML, y, LOGO_W, LOGO_H)
+    doc.addImage(logoBase64, logoImgFormat, ML, y, LOGO_W, LOGO_H)
   } else {
     // Typographic fallback
     doc.setFontSize(15)
@@ -317,7 +327,25 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
 
   if (signatureType === 'drawn' && formData.signatureData) {
     try {
-      doc.addImage(formData.signatureData, 'PNG', ML + 3, y + 2, CW - 6, SIG_H - 4)
+      // Compress signature: canvas can be retina (2-3× display size).
+      // Resize to 760×150px max before embedding to keep PDF size small.
+      let sigData = formData.signatureData
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const sharp = require('sharp')
+        const match = sigData.match(/^data:image\/(?:png|jpeg);base64,(.+)$/)
+        if (match) {
+          const sigBuf = Buffer.from(match[1], 'base64')
+          const resized: Buffer = await sharp(sigBuf)
+            .resize(760, 150, { fit: 'inside', withoutEnlargement: true })
+            .png({ compressionLevel: 9 })
+            .toBuffer()
+          sigData = `data:image/png;base64,${resized.toString('base64')}`
+        }
+      } catch {
+        // Use original sigData if sharp fails
+      }
+      doc.addImage(sigData, 'PNG', ML + 3, y + 2, CW - 6, SIG_H - 4)
     } catch {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'italic')

@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
         signatureType,
         submittedAt: submittedAtFormatted,
       })
-      console.log(`[submit:${applicationId}] PDF generated OK, size=${pdfBlob.size}`)
+      const pdfSizeKB = Math.round(pdfBlob.size / 1024)
+      console.log(`[submit:${applicationId}] PDF generated OK — size: ${pdfSizeKB}KB (${(pdfSizeKB / 1024).toFixed(2)}MB)`)
 
       // 4. Upload PDF to Blob storage
       const pdfPath = `applications/${applicationId}/signed-application-${applicationId}.pdf`
@@ -161,13 +162,20 @@ export async function POST(request: NextRequest) {
       pdfBlobPathname = pdfUpload.pathname
       console.log(`[submit:${applicationId}] PDF uploaded to blob: ${pdfBlobPathname}`)
 
-      // Prepare base64 attachment for emails
-      const pdfArrayBuffer = await pdfBlob.arrayBuffer()
-      const pdfBase64 = Buffer.from(pdfArrayBuffer).toString('base64')
-      pdfAttachment = {
-        content: pdfBase64,
-        filename: `mialab-application-${applicationId.slice(0, 8)}.pdf`,
-        type: 'application/pdf',
+      // Prepare base64 attachment for internal email only.
+      // Threshold: 7MB — well under SendGrid's 30MB limit but safe for serverless.
+      const PDF_ATTACH_THRESHOLD_KB = 7 * 1024
+      if (pdfSizeKB <= PDF_ATTACH_THRESHOLD_KB) {
+        const pdfArrayBuffer = await pdfBlob.arrayBuffer()
+        const pdfBase64 = Buffer.from(pdfArrayBuffer).toString('base64')
+        pdfAttachment = {
+          content: pdfBase64,
+          filename: `mialab-application-${applicationId.slice(0, 8)}.pdf`,
+          type: 'application/pdf',
+        }
+        console.log(`[submit:${applicationId}] PDF attachment prepared (${pdfSizeKB}KB — within threshold)`)
+      } else {
+        console.warn(`[submit:${applicationId}] PDF size ${pdfSizeKB}KB exceeds ${PDF_ATTACH_THRESHOLD_KB}KB threshold — internal email will include a link instead of attachment`)
       }
 
       // 5. Record PDF document
@@ -258,14 +266,15 @@ export async function POST(request: NextRequest) {
     })
 
     // 11. Send confirmation emails — always runs, PDF attachment is optional
-    console.log(`[submit:${applicationId}] Sending emails. PDF attachment: ${pdfAttachment ? 'yes' : 'no (PDF failed)'}`)
+    console.log(`[submit:${applicationId}] Sending emails. PDF attachment for internal: ${pdfAttachment ? 'yes' : 'no'}`)
     console.log(`[submit:${applicationId}] SENDGRID_API_KEY present: ${!!process.env.SENDGRID_API_KEY}`)
     console.log(`[submit:${applicationId}] MAIL_FROM: ${process.env.MAIL_FROM || 'cs@mialab.com (default)'}`)
     console.log(`[submit:${applicationId}] MAIL_TO_INTERNAL: ${process.env.MAIL_TO_INTERNAL || 'michael@mialab.com (default)'}`)
 
-    const emailAttachments = pdfAttachment ? [pdfAttachment] : undefined
+    // PDF is attached to internal email only — customer email is lightweight (no attachment)
+    const internalAttachments = pdfAttachment ? [pdfAttachment] : undefined
 
-    // 11a. Customer confirmation
+    // 11a. Customer confirmation — no attachment
     const customerEmailHtml = generateCustomerConfirmationEmail({
       primaryContactName: formData.primaryContactName,
     })
@@ -275,7 +284,7 @@ export async function POST(request: NextRequest) {
       formData.email,
       EMAIL_SUBJECTS.customerConfirmation,
       customerEmailHtml,
-      emailAttachments
+      undefined  // no attachment — keeps customer email lightweight
     )
     console.log(`[submit:${applicationId}] Customer email result: success=${customerEmailResult.success} messageId=${customerEmailResult.messageId} error=${customerEmailResult.error ?? 'none'}`)
 
@@ -294,7 +303,7 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     })
 
-    // 11b. Internal notification
+    // 11b. Internal notification — PDF attached
     const internalEmailHtml = generateInternalNotificationEmail({
       applicationId,
       submissionDate: submittedAtFormatted,
@@ -304,12 +313,12 @@ export async function POST(request: NextRequest) {
     })
 
     const internalRecipient = getMialabInternalEmail()
-    console.log(`[submit:${applicationId}] Sending internal email to: ${internalRecipient}`)
+    console.log(`[submit:${applicationId}] Sending internal email to: ${internalRecipient} (attachment: ${internalAttachments ? 'pdf' : 'none'})`)
     const internalEmailResult = await sendEmail(
       internalRecipient,
       EMAIL_SUBJECTS.internalNotification,
       internalEmailHtml,
-      emailAttachments
+      internalAttachments
     )
     console.log(`[submit:${applicationId}] Internal email result: success=${internalEmailResult.success} messageId=${internalEmailResult.messageId} error=${internalEmailResult.error ?? 'none'}`)
 
