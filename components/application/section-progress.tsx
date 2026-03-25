@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { VISIBLE_STEP_TITLES, STEP_TITLES } from '@/lib/form-types'
+import { VISIBLE_STEP_TITLES } from '@/lib/form-types'
 
 interface SectionProgressProps {
   currentStep: number // Internal step (1-10)
@@ -25,14 +25,6 @@ function getParentPhase(internalStep: number): number {
   return 3
 }
 
-// Get position within the current phase (e.g., "Section 2 of 3")
-function getPositionInPhase(internalStep: number): { current: number; total: number } {
-  const phase = getParentPhase(internalStep)
-  const stepsInPhase = PHASE_INTERNAL_STEPS[phase]
-  const index = stepsInPhase.indexOf(internalStep)
-  return { current: index + 1, total: stepsInPhase.length }
-}
-
 // Check if a parent phase is complete
 function isPhaseComplete(phase: number, currentInternalStep: number): boolean {
   const stepsInPhase = PHASE_INTERNAL_STEPS[phase]
@@ -52,25 +44,17 @@ function isOnPhase(phase: number, currentInternalStep: number): boolean {
 
 export function SectionProgress({ currentStep, totalSteps }: SectionProgressProps) {
   const currentPhase = getParentPhase(currentStep)
-  const positionInPhase = getPositionInPhase(currentStep)
-  const currentSectionTitle = STEP_TITLES[currentStep - 1]
-  
+
   // Calculate gradual progress based on 10 internal steps
   const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100
 
   return (
     <div className="w-full space-y-4">
-      {/* Parent Phase Header with substep indicator */}
+      {/* Parent Phase Header */}
       <div className="text-center">
-        <p className="text-sm font-medium text-[#6fcbdb]">
-          Phase {currentPhase} of {VISIBLE_TOTAL_STEPS}
-        </p>
         <h2 className="text-xl font-bold text-[#b40000]">
           {VISIBLE_STEP_TITLES[currentPhase - 1]}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Section {positionInPhase.current} of {positionInPhase.total} — {currentSectionTitle}
-        </p>
       </div>
 
       {/* Overall progress bar (gradual, based on 10 steps) */}
