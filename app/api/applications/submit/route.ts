@@ -137,22 +137,64 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     })
 
-    // 3. Generate the PDF
-    const pdfBlob = await generateApplicationPDF({
-      formData,
-      applicationId,
-      signatureType,
-      submittedAt: submittedAtFormatted,
-    })
+    // 3. Generate PDF and upload to Blob — isolated so any failure here
+    //    does NOT prevent emails from sending.
+    let pdfBlobPathname: string | null = null
+    let pdfAttachment: { content: string; filename: string; type: string } | null = null
 
-    // 4. Upload PDF to blob storage
-    const pdfPath = `applications/${applicationId}/signed-application-${applicationId}.pdf`
-    const pdfUpload = await put(pdfPath, pdfBlob, {
-      access: 'private',
-      contentType: 'application/pdf',
-    })
+    try {
+      console.log(`[submit:${applicationId}] Generating PDF...`)
+      const pdfBlob = await generateApplicationPDF({
+        formData,
+        applicationId,
+        signatureType,
+        submittedAt: submittedAtFormatted,
+      })
+      console.log(`[submit:${applicationId}] PDF generated OK, size=${pdfBlob.size}`)
 
-    // 5. Log agreement acceptance
+      // 4. Upload PDF to Blob storage
+      const pdfPath = `applications/${applicationId}/signed-application-${applicationId}.pdf`
+      const pdfUpload = await put(pdfPath, pdfBlob, {
+        access: 'private',
+        contentType: 'application/pdf',
+      })
+      pdfBlobPathname = pdfUpload.pathname
+      console.log(`[submit:${applicationId}] PDF uploaded to blob: ${pdfBlobPathname}`)
+
+      // Prepare base64 attachment for emails
+      const pdfArrayBuffer = await pdfBlob.arrayBuffer()
+      const pdfBase64 = Buffer.from(pdfArrayBuffer).toString('base64')
+      pdfAttachment = {
+        content: pdfBase64,
+        filename: `mialab-application-${applicationId.slice(0, 8)}.pdf`,
+        type: 'application/pdf',
+      }
+
+      // 5. Record PDF document
+      await supabase.from('application_documents').insert({
+        application_id: applicationId,
+        document_type: 'signed_application_pdf',
+        original_filename: `signed-application-${applicationId}.pdf`,
+        blob_path: pdfBlobPathname,
+        content_type: 'application/pdf',
+        file_size_bytes: pdfBlob.size,
+      })
+    } catch (pdfError) {
+      console.error(`[submit:${applicationId}] PDF generation/upload failed — emails will send without attachment:`, pdfError)
+    }
+
+    // 6. If resale certificate was uploaded, link it
+    if (resaleCertificatePath) {
+      await supabase.from('application_documents').insert({
+        application_id: applicationId,
+        document_type: 'resale_certificate',
+        original_filename: formData.resaleCertificateFileName,
+        blob_path: resaleCertificatePath,
+        content_type: 'application/pdf',
+      })
+    }
+
+    // 7. Log agreement acceptance
     await supabase.from('application_audit_trail').insert({
       application_id: applicationId,
       action: 'agreement_accepted',
@@ -167,7 +209,7 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     })
 
-    // 6. Log signature completion
+    // 8. Log signature completion
     await supabase.from('application_audit_trail').insert({
       application_id: applicationId,
       action: 'signature_completed',
@@ -181,33 +223,12 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     })
 
-    // 7. Record PDF document
-    await supabase.from('application_documents').insert({
-      application_id: applicationId,
-      document_type: 'signed_application_pdf',
-      original_filename: `signed-application-${applicationId}.pdf`,
-      blob_path: pdfUpload.pathname,
-      content_type: 'application/pdf',
-      file_size_bytes: pdfBlob.size,
-    })
-
-    // 8. If resale certificate was uploaded, link it
-    if (resaleCertificatePath) {
-      await supabase.from('application_documents').insert({
-        application_id: applicationId,
-        document_type: 'resale_certificate',
-        original_filename: formData.resaleCertificateFileName,
-        blob_path: resaleCertificatePath,
-        content_type: 'application/pdf',
-      })
-    }
-
     // 9. Update application status to submitted and lock it
     const { error: updateError } = await supabase
       .from('applications')
       .update({
         status: 'submitted',
-        signed_pdf_blob_path: pdfUpload.pathname,
+        signed_pdf_blob_path: pdfBlobPathname,
         submitted_at: submittedAt,
         locked_at: submittedAt,
         updated_at: submittedAt,
@@ -215,7 +236,7 @@ export async function POST(request: NextRequest) {
       .eq('id', applicationId)
 
     if (updateError) {
-      console.error('Failed to update application status:', updateError)
+      console.error(`[submit:${applicationId}] Failed to update application status:`, updateError)
       return NextResponse.json(
         { error: 'Failed to finalize application' },
         { status: 500 }
@@ -228,37 +249,36 @@ export async function POST(request: NextRequest) {
       action: 'application_submitted',
       action_details: {
         processing_time_ms: Date.now() - startTime,
-        pdf_path: pdfUpload.pathname,
+        pdf_path: pdfBlobPathname,
+        pdf_attached_to_email: !!pdfAttachment,
         locked: true,
       },
       ip_address: ipAddress,
       user_agent: userAgent,
     })
 
-    // 11. Send confirmation emails (after PDF is stored)
-    // Convert PDF blob to base64 for email attachment
-    const pdfArrayBuffer = await pdfBlob.arrayBuffer()
-    const pdfBase64 = Buffer.from(pdfArrayBuffer).toString('base64')
-    
-    const pdfAttachment = {
-      content: pdfBase64,
-      filename: `mialab-application-${applicationId.slice(0, 8)}.pdf`,
-      type: 'application/pdf',
-    }
+    // 11. Send confirmation emails — always runs, PDF attachment is optional
+    console.log(`[submit:${applicationId}] Sending emails. PDF attachment: ${pdfAttachment ? 'yes' : 'no (PDF failed)'}`)
+    console.log(`[submit:${applicationId}] SENDGRID_API_KEY present: ${!!process.env.SENDGRID_API_KEY}`)
+    console.log(`[submit:${applicationId}] MAIL_FROM: ${process.env.MAIL_FROM || 'cs@mialab.com (default)'}`)
+    console.log(`[submit:${applicationId}] MAIL_TO_INTERNAL: ${process.env.MAIL_TO_INTERNAL || 'michael@mialab.com (default)'}`)
 
-    // 11a. Send customer confirmation email
+    const emailAttachments = pdfAttachment ? [pdfAttachment] : undefined
+
+    // 11a. Customer confirmation
     const customerEmailHtml = generateCustomerConfirmationEmail({
       primaryContactName: formData.primaryContactName,
     })
-    
+
+    console.log(`[submit:${applicationId}] Sending customer email to: ${formData.email}`)
     const customerEmailResult = await sendEmail(
       formData.email,
       EMAIL_SUBJECTS.customerConfirmation,
       customerEmailHtml,
-      [pdfAttachment]
+      emailAttachments
     )
+    console.log(`[submit:${applicationId}] Customer email result: success=${customerEmailResult.success} messageId=${customerEmailResult.messageId} error=${customerEmailResult.error ?? 'none'}`)
 
-    // Log customer email in audit trail
     await supabase.from('application_audit_trail').insert({
       application_id: applicationId,
       action: 'email_sent',
@@ -274,7 +294,7 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     })
 
-    // 11b. Send internal Mialab notification email
+    // 11b. Internal notification
     const internalEmailHtml = generateInternalNotificationEmail({
       applicationId,
       submissionDate: submittedAtFormatted,
@@ -283,20 +303,22 @@ export async function POST(request: NextRequest) {
       resaleCertificateUploaded: !!resaleCertificatePath,
     })
 
+    const internalRecipient = getMialabInternalEmail()
+    console.log(`[submit:${applicationId}] Sending internal email to: ${internalRecipient}`)
     const internalEmailResult = await sendEmail(
-      getMialabInternalEmail(),
+      internalRecipient,
       EMAIL_SUBJECTS.internalNotification,
       internalEmailHtml,
-      [pdfAttachment]
+      emailAttachments
     )
+    console.log(`[submit:${applicationId}] Internal email result: success=${internalEmailResult.success} messageId=${internalEmailResult.messageId} error=${internalEmailResult.error ?? 'none'}`)
 
-    // Log internal email in audit trail
     await supabase.from('application_audit_trail').insert({
       application_id: applicationId,
       action: 'email_sent',
       action_details: {
         email_type: 'internal_notification',
-        recipient: getMialabInternalEmail(),
+        recipient: internalRecipient,
         subject: EMAIL_SUBJECTS.internalNotification,
         success: internalEmailResult.success,
         message_id: internalEmailResult.messageId,
@@ -306,12 +328,11 @@ export async function POST(request: NextRequest) {
       user_agent: userAgent,
     })
 
-    // Note: Email failures are logged but don't fail the submission
     if (!customerEmailResult.success) {
-      console.error('Failed to send customer confirmation email:', customerEmailResult.error)
+      console.error(`[submit:${applicationId}] Customer email FAILED: ${customerEmailResult.error}`)
     }
     if (!internalEmailResult.success) {
-      console.error('Failed to send internal notification email:', internalEmailResult.error)
+      console.error(`[submit:${applicationId}] Internal email FAILED: ${internalEmailResult.error}`)
     }
 
     return NextResponse.json({

@@ -3,9 +3,9 @@ import sgMail from '@sendgrid/mail'
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
 
-const MIALAB_FROM_EMAIL = process.env.MIALAB_FROM_EMAIL || 'noreply@mialab.com'
-const MIALAB_FROM_NAME = process.env.MIALAB_FROM_NAME || 'Mialab'
-const MIALAB_INTERNAL_EMAIL = process.env.MIALAB_INTERNAL_EMAIL || 'newaccounts@mialab.com'
+const MIALAB_FROM_EMAIL = process.env.MAIL_FROM || 'cs@mialab.com'
+const MIALAB_FROM_NAME = 'Mialab'
+const MIALAB_INTERNAL_EMAIL = process.env.MAIL_TO_INTERNAL || 'michael@mialab.com'
 
 export interface EmailAttachment {
   content: string // Base64 encoded content
@@ -50,8 +50,14 @@ export async function sendEmail(
       success: true,
       messageId,
     }
-  } catch (error) {
-    console.error('SendGrid email error:', error)
+  } catch (error: unknown) {
+    // Log full SendGrid error body for debugging
+    if (error && typeof error === 'object' && 'response' in error) {
+      const sgError = error as { response?: { body?: unknown; status?: number } }
+      console.error('SendGrid error status:', sgError.response?.status)
+      console.error('SendGrid error body:', JSON.stringify(sgError.response?.body))
+    }
+    console.error('SendGrid email error:', error instanceof Error ? error.message : error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown email error',

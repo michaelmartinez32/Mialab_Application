@@ -12,279 +12,351 @@ interface PDFGeneratorOptions {
 export async function generateApplicationPDF(options: PDFGeneratorOptions): Promise<Blob> {
   const { formData, applicationId, signatureType, submittedAt } = options
   const doc = new jsPDF()
-  
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const margin = 20
-  const contentWidth = pageWidth - margin * 2
-  let y = 20
 
-  // Two-column layout settings
-  const labelColumnWidth = 55 // Fixed width for labels
-  const valueColumnX = margin + labelColumnWidth + 5 // X position where values start
-  const valueColumnWidth = contentWidth - labelColumnWidth - 5 // Remaining width for values
-  const rowSpacing = 7 // Vertical spacing between rows
+  // ── PAGE GEOMETRY ───────────────────────────────────────────────────────────
+  const PW = doc.internal.pageSize.getWidth()   // 210mm A4
+  const PH = doc.internal.pageSize.getHeight()  // 297mm A4
+  const ML = 10                // left/right margin
+  const CW = PW - ML * 2       // 190mm usable width
+  const GAP = 4                // gap between dual columns
+  const HALF = (CW - GAP) / 2  // ~93mm per column
+  const RC = ML + HALF + GAP   // right column x
 
-  // Helper functions
-  const addHeader = (text: string) => {
-    if (y > 250) {
+  // Label widths (label sits left of value within each column)
+  const LW_FULL = 44   // for full-width rows
+  const LW_HALF = 33   // for dual-column rows
+
+  // Vertical rhythm
+  const RH = 4.5          // standard row height (mm)
+  const FLOOR = PH - 9   // don't render below this (footer zone)
+
+  let y = 10
+
+  // ── OVERFLOW GUARD ──────────────────────────────────────────────────────────
+  const ensureSpace = (needed: number) => {
+    if (y + needed > FLOOR) {
       doc.addPage()
-      y = 20
+      y = 10
     }
-    y += 4 // Extra spacing before headers
-    doc.setFontSize(12)
+  }
+
+  // ── SECTION HEADER ──────────────────────────────────────────────────────────
+  const sectionHeader = (title: string) => {
+    ensureSpace(10)
+    y += 2.5
+    doc.setFontSize(7.5)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(180, 0, 0) // #b40000
-    doc.text(text, margin, y)
-    y += 2
-    // Underline for section headers
+    doc.setTextColor(180, 0, 0)
+    doc.text(title, ML, y)
+    y += 1.8
     doc.setDrawColor(180, 0, 0)
-    doc.setLineWidth(0.3)
-    doc.line(margin, y, margin + doc.getTextWidth(text), y)
-    y += 8
-    doc.setTextColor(0, 0, 0)
+    doc.setLineWidth(0.2)
+    doc.line(ML, y, ML + CW, y)
+    y += 2.5
+    doc.setTextColor(20, 20, 20)
   }
 
-  const addField = (label: string, value: string) => {
-    const displayValue = value || 'N/A'
-    
-    // Calculate how many lines the value will need
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'normal')
-    const valueLines = doc.splitTextToSize(displayValue, valueColumnWidth)
-    const lineHeight = 4
-    const totalHeight = valueLines.length * lineHeight + rowSpacing
-    
-    // Check if we need a new page
-    if (y + totalHeight > 270) {
-      doc.addPage()
-      y = 20
-    }
-    
-    // Draw label (left column)
+  // ── FIELD RENDERERS ─────────────────────────────────────────────────────────
+  // Draws one label+value pair; returns 1 if value wrapped to a second line
+  const renderPair = (
+    label: string,
+    value: string,
+    x: number,
+    labelW: number,
+    valueW: number,
+    fy: number
+  ): number => {
+    const v = value || '—'
+    doc.setFontSize(6.5)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(80, 80, 80)
-    doc.text(label, margin, y)
-    
-    // Draw value (right column)
+    doc.setTextColor(115, 115, 115)
+    doc.text(label, x, fy)
+
+    doc.setFontSize(7.5)
     doc.setFont('helvetica', 'normal')
-    doc.setTextColor(30, 30, 30)
-    doc.text(valueLines, valueColumnX, y)
-    
-    // Move to next row
-    y += valueLines.length * lineHeight + rowSpacing
+    doc.setTextColor(20, 20, 20)
+    const lines = doc.splitTextToSize(v, valueW)
+    doc.text(lines[0] || '', x + labelW, fy)
+    if (lines.length > 1) {
+      doc.text(lines[1], x + labelW, fy + 3.2)
+      return 1
+    }
+    return 0
   }
 
-  const addSpacer = (height = 8) => {
-    y += height
+  // Two label+value pairs on one row
+  const dualRow = (lLabel: string, lValue: string, rLabel: string, rValue: string) => {
+    doc.setFontSize(7.5)
+    const vW = HALF - LW_HALF - 1
+    const lWrap = doc.splitTextToSize(lValue || '—', vW).length > 1
+    const rWrap = doc.splitTextToSize(rValue || '—', vW).length > 1
+    const extra = (lWrap || rWrap) ? 1 : 0
+    const h = RH + extra * 3.2
+    ensureSpace(h)
+    renderPair(lLabel, lValue, ML, LW_HALF, vW, y)
+    renderPair(rLabel, rValue, RC, LW_HALF, vW, y)
+    y += h
   }
 
-  // Title
-  doc.setFontSize(20)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(153, 0, 0)
-  doc.text('MIALAB', pageWidth / 2, y, { align: 'center' })
-  y += 8
-  doc.setFontSize(14)
-  doc.setTextColor(51, 51, 51)
-  doc.text('B2B Account Application', pageWidth / 2, y, { align: 'center' })
-  y += 10
+  // Single full-width field
+  const fullRow = (label: string, value: string) => {
+    const v = value || '—'
+    doc.setFontSize(7.5)
+    const vW = CW - LW_FULL - 1
+    const lines = doc.splitTextToSize(v, vW)
+    const h = Math.max(RH, lines.length * 3.5)
+    ensureSpace(h)
+    renderPair(label, v, ML, LW_FULL, vW, y)
+    y += h
+  }
 
-  // Application metadata
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(100, 100, 100)
-  doc.text(`Application ID: ${applicationId}`, margin, y)
-  doc.text(`Submitted: ${submittedAt}`, pageWidth - margin, y, { align: 'right' })
-  y += 4
-  doc.text(`Agreement Version: ${AGREEMENT_VERSION}`, margin, y)
-  y += 10
+  // ── HEADER: LOGO + TITLE + META ─────────────────────────────────────────────
+  const LOGO_W = 22
+  const LOGO_H = 15  // logo aspect ratio ~1.47:1 (w:h)
 
-  // Horizontal line
-  doc.setDrawColor(200, 200, 200)
-  doc.line(margin, y, pageWidth - margin, y)
-  y += 10
+  // Attempt to load logo — dynamic require keeps fs out of the module scope
+  // so it never interferes with Next.js/Turbopack server bundling
+  let logoBase64: string | null = null
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs') as typeof import('fs')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path') as typeof import('path')
+    const logoPath = path.join(process.cwd(), 'public', 'images', 'mialab-logo.png')
+    const buf = fs.readFileSync(logoPath)
+    logoBase64 = `data:image/png;base64,${buf.toString('base64')}`
+  } catch {
+    // Logo unavailable — fall back to typographic header
+  }
 
-  // Section 1: Practice Information
-  addHeader('1. Practice Information')
-  addField('Practice Name', formData.practiceName)
-  if (formData.dbaName) addField('DBA Name', formData.dbaName)
-  addField('Doctor/Owner Name', formData.doctorOwnerName)
-  addField('Primary Contact', formData.primaryContactName)
-  addField('Email', formData.email)
-  addField('Phone', formData.phone)
-  if (formData.website) addField('Website', formData.website)
-  addField('Business Type', formData.businessType)
-  addField('Years in Business', formData.yearsInBusiness)
-  addField('Owner/Principal', formData.isOwnerPrincipal)
-  addSpacer()
-
-  // Section 2: Billing Information
-  addHeader('2. Billing Information')
-  const billingAddress = [
-    formData.billingAddress1,
-    formData.billingAddress2,
-    `${formData.billingCity}, ${formData.billingState} ${formData.billingZip}`
-  ].filter(Boolean).join('\n')
-  addField('Billing Address', billingAddress.replace(/\n/g, ', '))
-  addField('A/P Contact', formData.apContactName)
-  addField('A/P Email', formData.apEmail)
-  addSpacer()
-
-  // Section 3: Shipping Information
-  addHeader('3. Shipping Information')
-  if (formData.shippingSameAsBilling) {
-    addField('Shipping Address', 'Same as billing address')
+  if (logoBase64) {
+    doc.addImage(logoBase64, 'PNG', ML, y, LOGO_W, LOGO_H)
   } else {
-    const shippingAddress = [
-      formData.shippingAddress1,
-      formData.shippingAddress2,
-      `${formData.shippingCity}, ${formData.shippingState} ${formData.shippingZip}`
-    ].filter(Boolean).join(', ')
-    addField('Shipping Address', shippingAddress)
+    // Typographic fallback
+    doc.setFontSize(15)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(180, 0, 0)
+    doc.text('MIALAB', ML, y + 8)
   }
-  addSpacer()
 
-  // Section 4: Business Details
-  addHeader('4. Business Details')
-  addField('Tax ID / EIN', formData.taxId)
-  addField('Number of Locations', formData.numberOfLocations)
-  addField('Monthly Lab Volume', formData.monthlyLabVolume)
-  addField('Weekly Exams', formData.weeklyExams)
-  addField('Edge Lenses In-House', formData.edgeLensesInHouse)
-  addField('Lab Orders Managed By', formData.labOrdersManager)
+  // Title to the right of the logo
+  const titleX = ML + LOGO_W + 4
+  doc.setFontSize(12.5)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(25, 25, 25)
+  doc.text('Mialab Account Application', titleX, y + 5.5)
+
+  doc.setFontSize(7)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(115, 115, 115)
+  doc.text('Wholesale Optical Laboratory', titleX, y + 10)
+
+  // Application ID + Submitted date — top right
+  doc.setFontSize(6.5)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(135, 135, 135)
+  doc.text(`Application ID: ${applicationId}`, PW - ML, y + 4.5, { align: 'right' })
+  doc.text(`Submitted: ${submittedAt}`, PW - ML, y + 9.5, { align: 'right' })
+
+  y += LOGO_H + 2
+
+  // Full-width divider
+  doc.setDrawColor(205, 205, 205)
+  doc.setLineWidth(0.4)
+  doc.line(ML, y, PW - ML, y)
+  y += 4
+
+  // ── PRACTICE / BUSINESS INFORMATION ─────────────────────────────────────────
+  sectionHeader('Practice / Business Information')
+
+  fullRow('Practice / Business Name', formData.practiceName)
+  if (formData.dbaName) fullRow('DBA / Trade Name', formData.dbaName)
+  dualRow('Doctor / Owner', formData.doctorOwnerName, 'Primary Contact', formData.primaryContactName)
+  dualRow('Email', formData.email, 'Phone', formData.phone)
+  if (formData.website) fullRow('Website', formData.website)
+  dualRow('Business Type', formData.businessType, 'Years in Business', formData.yearsInBusiness)
+  fullRow('Owner / Principal', formData.isOwnerPrincipal)
+
+  // ── BILLING & A/P INFORMATION ────────────────────────────────────────────────
+  sectionHeader('Billing & A/P Information')
+
+  const billingStreet = formData.billingAddress1 +
+    (formData.billingAddress2 ? `  ${formData.billingAddress2}` : '')
+  fullRow('Billing Address', billingStreet)
+  fullRow('City, State, Zip', `${formData.billingCity}, ${formData.billingState}  ${formData.billingZip}`)
+  dualRow('A/P Contact', formData.apContactName, 'A/P Email', formData.apEmail)
+
+  // ── SHIPPING INFORMATION ─────────────────────────────────────────────────────
+  sectionHeader('Shipping Information')
+
+  if (formData.shippingSameAsBilling) {
+    fullRow('Shipping Address', 'Same as billing address')
+  } else {
+    const shipStreet = (formData.shippingAddress1 || '') +
+      (formData.shippingAddress2 ? `  ${formData.shippingAddress2}` : '')
+    const shipCSZ = [formData.shippingCity, formData.shippingState, formData.shippingZip]
+      .filter(Boolean).join(', ')
+    fullRow('Shipping Address', shipStreet || '—')
+    if (shipCSZ) fullRow('City, State, Zip', shipCSZ)
+  }
+
+  // ── BUSINESS DETAILS ─────────────────────────────────────────────────────────
+  sectionHeader('Business Details')
+
+  dualRow('Tax ID / EIN', formData.taxId, 'No. of Locations', formData.numberOfLocations)
+  dualRow('Monthly Lab Volume', formData.monthlyLabVolume, 'Weekly Eye Exams', formData.weeklyExams)
+  dualRow('In-House Edging', formData.edgeLensesInHouse, 'Lab Orders Managed By', formData.labOrdersManager)
   if (formData.labOrdersContactName) {
-    addField('Lab Orders Contact', `${formData.labOrdersContactName} (${formData.labOrdersContactEmail})`)
+    dualRow('Lab Contact Name', formData.labOrdersContactName,
+      'Lab Contact Email', formData.labOrdersContactEmail || '')
   }
-  addField('Plan to Begin Sending', formData.planToBeginSending)
-  addField('Main Reason for Mialab', formData.mainReason)
-  addSpacer()
+  dualRow('Plan to Begin Sending', formData.planToBeginSending, 'Reason for Account', formData.mainReason)
 
-  // Section 5: Ordering Preferences
-  addHeader('5. Ordering Preferences')
-  let orderingMethodDisplay = formData.orderingMethod
-  if (formData.orderingMethod === 'other' && formData.otherOrderingMethod) {
-    orderingMethodDisplay = `Other: ${formData.otherOrderingMethod}`
-  }
-  addField('Ordering Method', orderingMethodDisplay)
-  addSpacer()
+  // ── ORDERING, PAYMENT & FINANCIAL ────────────────────────────────────────────
+  sectionHeader('Ordering, Payment & Financial')
 
-  // Section 6: Sales Tax Information
-  addHeader('6. Sales Tax Information')
-  addField('Has Resale Certificate', formData.hasResaleCertificate)
-  if (formData.resaleCertificateFileName) {
-    addField('Certificate File', formData.resaleCertificateFileName)
-  }
-  addSpacer()
+  const orderDisplay = (formData.orderingMethod === 'other' && formData.otherOrderingMethod)
+    ? `Other: ${formData.otherOrderingMethod}`
+    : formData.orderingMethod
 
-  // Section 7: Credit Application
-  addHeader('7. Credit Application')
-  addField('Apply for Credit', formData.applyForCredit)
-  if (formData.applyForCredit === 'yes' && formData.requestedCreditAmount) {
-    addField('Requested Credit Amount', formData.requestedCreditAmount)
-  }
-  addSpacer()
-
-  // Section 8: Payment Preferences
-  addHeader('8. Payment Preferences')
-  const paymentMethodLabels: Record<string, string> = {
+  const pmLabels: Record<string, string> = {
     check: 'Check',
     ach: 'ACH Bank Transfer',
     debit: 'Debit Card',
-    credit: 'Credit Card (3% processing fee)',
+    credit: 'Credit Card (+3% fee)',
   }
-  addField('Payment Method', paymentMethodLabels[formData.paymentMethod] || formData.paymentMethod)
-  addSpacer()
+  dualRow('Ordering Method', orderDisplay,
+    'Payment Method', pmLabels[formData.paymentMethod] || formData.paymentMethod)
+  dualRow('Resale Certificate', formData.hasResaleCertificate,
+    'Apply for Credit', formData.applyForCredit)
+  if (formData.applyForCredit === 'yes' && formData.requestedCreditAmount) {
+    fullRow('Requested Credit Limit', formData.requestedCreditAmount)
+  }
 
-  // New page for Agreement
-  doc.addPage()
-  y = 20
+  // ── ACCOUNT AND CREDIT AGREEMENT ─────────────────────────────────────────────
+  sectionHeader('Account and Credit Agreement')
 
-  // Section 9: Agreement
-  addHeader('9. Mialab Account and Credit Agreement')
-  doc.setFontSize(8)
+  doc.setFontSize(5.9)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(51, 51, 51)
-  
-  const agreementLines = doc.splitTextToSize(agreementText, contentWidth)
-  for (const line of agreementLines) {
-    if (y > 270) {
-      doc.addPage()
-      y = 20
-    }
-    doc.text(line, margin, y)
-    y += 4
-  }
-  addSpacer(8)
+  doc.setTextColor(58, 58, 58)
 
-  // Acknowledgments
-  addHeader('Acknowledgments')
-  const ackItems = [
-    { key: 'certifyTrueAccurate', checked: formData.certifyTrueAccurate },
-    { key: 'authorizeCreditCheck', checked: formData.authorizeCreditCheck },
+  const AGR_LH = 2.75  // tighter line height for agreement text
+  const paragraphs = agreementText.split('\n\n').filter(p => p.trim())
+
+  for (const para of paragraphs) {
+    const lines = doc.splitTextToSize(para.trim(), CW)
+    ensureSpace(lines.length * AGR_LH + 1.2)
+    for (const line of lines) {
+      doc.text(line, ML, y)
+      y += AGR_LH
+    }
+    y += 0.9  // tight paragraph spacing
+  }
+  y += 2
+
+  // ── ACKNOWLEDGEMENTS ─────────────────────────────────────────────────────────
+  sectionHeader('Acknowledgements')
+
+  const ackItems: Array<{ key: keyof typeof acknowledgmentLabels; checked: boolean }> = [
+    { key: 'certifyTrueAccurate',      checked: formData.certifyTrueAccurate },
+    { key: 'authorizeCreditCheck',     checked: formData.authorizeCreditCheck },
     { key: 'acknowledgeProcessingFee', checked: formData.acknowledgeProcessingFee },
-    { key: 'agreeToTerms', checked: formData.agreeToTerms },
+    { key: 'agreeToTerms',             checked: formData.agreeToTerms },
   ]
-  
-  doc.setFontSize(9)
-  for (const ack of ackItems) {
-    if (y > 270) {
-      doc.addPage()
-      y = 20
-    }
-    const checkmark = ack.checked ? '[X]' : '[ ]'
-    const label = acknowledgmentLabels[ack.key as keyof typeof acknowledgmentLabels]
-    doc.text(`${checkmark} ${label}`, margin, y)
-    y += 6
-  }
-  addSpacer()
 
-  // Section 10: Signature
-  addHeader('10. Electronic Signature')
-  addField('Signature Type', signatureType === 'typed' ? 'Typed Signature' : 'Drawn Signature')
-  addField('Printed Name', formData.printedName)
-  addField('Title', formData.title)
-  addField('Date', formData.signatureDate)
-  addSpacer(8)
+  for (const ack of ackItems) {
+    const label = acknowledgmentLabels[ack.key]
+    doc.setFontSize(7.5)
+    const labelLines = doc.splitTextToSize(label, CW - 10)
+    const h = Math.max(4.3, labelLines.length * 3.8)
+    ensureSpace(h)
+
+    // Checkbox
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'bold')
+    if (ack.checked) {
+      doc.setTextColor(25, 100, 25)
+    } else {
+      doc.setTextColor(165, 165, 165)
+    }
+    doc.text(ack.checked ? '[X]' : '[ ]', ML, y)
+
+    // Label
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(20, 20, 20)
+    doc.text(labelLines, ML + 9, y)
+    y += h
+  }
+
+  y += 2.5
+
+  // ── ELECTRONIC SIGNATURE ─────────────────────────────────────────────────────
+  sectionHeader('Electronic Signature')
+
+  dualRow('Printed Name', formData.printedName, 'Title / Position', formData.title)
+  dualRow('Method',
+    signatureType === 'typed' ? 'Typed signature' : 'Drawn (handwritten)',
+    'Date Signed', formData.signatureDate)
+
+  y += 1.5
+
+  const SIG_H = 20
+  ensureSpace(SIG_H + 9)
 
   // Signature box
-  if (y > 220) {
-    doc.addPage()
-    y = 20
-  }
-  
-  doc.setDrawColor(200, 200, 200)
-  doc.setFillColor(250, 250, 250)
-  doc.roundedRect(margin, y, contentWidth, 40, 3, 3, 'FD')
-  
+  doc.setDrawColor(210, 210, 210)
+  doc.setFillColor(252, 252, 252)
+  doc.roundedRect(ML, y, CW, SIG_H, 1.5, 1.5, 'FD')
+
+  // Watermark label inside box
+  doc.setFontSize(6.5)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(205, 205, 205)
+  doc.text('Signature', ML + 3, y + 4.5)
+
   if (signatureType === 'drawn' && formData.signatureData) {
-    // Draw the signature image
     try {
-      doc.addImage(formData.signatureData, 'PNG', margin + 5, y + 5, contentWidth - 10, 30)
+      doc.addImage(formData.signatureData, 'PNG', ML + 3, y + 2, CW - 6, SIG_H - 4)
     } catch {
-      doc.setFontSize(12)
+      doc.setFontSize(9)
       doc.setFont('helvetica', 'italic')
-      doc.text('[Signature image]', margin + 10, y + 22)
+      doc.setTextColor(170, 170, 170)
+      doc.text('[Drawn signature on file]', ML + 10, y + SIG_H / 2 + 1)
     }
   } else {
-    // Typed signature
-    doc.setFontSize(18)
-    doc.setFont('helvetica', 'italic')
-    doc.setTextColor(51, 51, 51)
-    doc.text(formData.printedName, margin + 10, y + 25)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bolditalic')
+    doc.setTextColor(22, 22, 22)
+    doc.text(formData.printedName, ML + 5, y + SIG_H / 2 + 3.5)
   }
-  y += 45
 
-  doc.setFontSize(8)
+  y += SIG_H + 3
+
+  // Attestation line
+  doc.setFontSize(6)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(100, 100, 100)
-  doc.text(`Electronically signed by ${formData.printedName} on ${formData.signatureDate}`, margin, y)
-  y += 10
+  doc.setTextColor(135, 135, 135)
+  doc.text(
+    `Electronically signed by ${formData.printedName}` +
+    (formData.title ? `, ${formData.title}` : '') +
+    ` on ${formData.signatureDate}. ` +
+    `This electronic record constitutes a legally binding signature.`,
+    ML, y, { maxWidth: CW }
+  )
 
-  // Footer
-  doc.setFontSize(7)
-  doc.setTextColor(150, 150, 150)
-  const footerText = `This document was electronically generated and signed. Application ID: ${applicationId}`
-  doc.text(footerText, pageWidth / 2, 285, { align: 'center' })
+  // ── FOOTER ON ALL PAGES ──────────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setFontSize(5.8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(175, 175, 175)
+    doc.text(
+      `Application ID: ${applicationId}  ·  Page ${i} of ${totalPages}`,
+      PW / 2, PH - 5, { align: 'center' }
+    )
+  }
 
   return doc.output('blob')
 }
