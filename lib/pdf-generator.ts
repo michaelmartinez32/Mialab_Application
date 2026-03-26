@@ -111,8 +111,10 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   }
 
   // ── HEADER: LOGO + TITLE + META ─────────────────────────────────────────────
-  const LOGO_W = 22
-  const LOGO_H = 15  // logo aspect ratio ~1.47:1 (w:h)
+  // Logo: Mialab_logo_whitebackround.png — 6954×3732px source, ratio 1.863:1
+  // Display at 75mm × 40mm (≈300px wide at 96dpi). White background — JPEG is ideal.
+  const LOGO_W = 75
+  const LOGO_H = 40
 
   // Attempt to load logo — dynamic require keeps fs out of the module scope
   // so it never interferes with Next.js/Turbopack server bundling
@@ -125,13 +127,12 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     const path = require('path') as typeof import('path')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const sharp = require('sharp')
-    const logoPath = path.join(process.cwd(), 'public', 'images', 'mialab-logo.png')
+    const logoPath = path.join(process.cwd(), 'public', 'images', 'Mialab_logo_whitebackround.png')
     const buf = fs.readFileSync(logoPath)
-    // Logo displays at 22mm×15mm — resize to 130×90px JPEG to avoid embedding a
-    // 6000px wide raw pixel grid that inflates the PDF to several megabytes.
+    // Resize to 600×322px JPEG — good quality for 75mm print, keeps PDF small
     const resized: Buffer = await sharp(buf)
-      .resize(130, 90, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 80 })
+      .resize(600, 322, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
       .toBuffer()
     logoBase64 = `data:image/jpeg;base64,${resized.toString('base64')}`
     logoImgFormat = 'JPEG'
