@@ -6,7 +6,7 @@ export function ApplicationHeader() {
           {/* Plain img — bypasses Next.js Image pipeline, loads directly from /public */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/mialab-logo.png"
+            src="/mialab-logo-pdf.png"
             alt="Mialab"
             style={{ height: '50px', width: 'auto' }}
           />
