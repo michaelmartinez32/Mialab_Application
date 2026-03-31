@@ -110,105 +110,25 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     y += h
   }
 
-  // ── HEADER: LOGO + TITLE + META ─────────────────────────────────────────────
-  // Logo: MIALAB-LOGO-WHITEBACK.jpg — white background JPEG, no transparency issues
-  // Display height 10mm, width auto from aspect ratio, capped at 45mm max
-  const LOGO_H = 10
-  const LOGO_W_MAX = 45
-  let LOGO_W = 30 // default; recalculated from real image aspect ratio below
-
-  // Same logo asset and loading approach as Quick Send (v0-sales-tool-quick-send).
-  // ASSET: public/mialab-logo-pdf.png — pre-resized to 480×258px (49 KB, ~0.47 MB decoded).
-  //   The original mialab-logo.png is 6954×3732px and decodes to ~99 MB, which crashes
-  //   Vercel serverless. Quick Send solved this by pre-resizing; we use the same file.
-  // METHOD: same multi-candidate fs.readFileSync approach used in Quick Send's
-  //   loadHeaderImageBuffer() — guards against path-resolution differences in compiled bundles.
-  let logoBase64: string | null = null
-  {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs') as typeof import('fs')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require('path') as typeof import('path')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const sharp = require('sharp')
-
-    // Multi-candidate paths — mirrors Quick Send's loadHeaderImageBuffer()
-    const candidates = [
-      path.join(process.cwd(), 'public', 'mialab-logo-pdf.png'),
-      path.join(__dirname, '..', '..', 'public', 'mialab-logo-pdf.png'),
-      path.join(__dirname, '..', 'public', 'mialab-logo-pdf.png'),
-    ]
-
-    let buf: Buffer | null = null
-    for (const p of candidates) {
-      const exists = fs.existsSync(p)
-      console.log(`[PDF] checking: ${p} | exists: ${exists}`)
-      if (exists) {
-        buf = fs.readFileSync(p)
-        console.log(`[PDF] loaded mialab-logo-pdf.png from: ${p} | bytes: ${buf.length}`)
-        break
-      }
-    }
-
-    if (buf) {
-      const meta = await sharp(buf).metadata()
-      console.log(`[PDF] logo format: ${meta.format} | dimensions: ${meta.width}x${meta.height}`)
-
-      // mialab-logo-pdf.png is 480×258px, aspect 1.860:1
-      // At LOGO_H=10mm, width = 10 × 1.860 = 18.6mm (well within LOGO_W_MAX=45mm)
-      if (meta.width && meta.height) {
-        LOGO_W = Math.min(Math.round((meta.width / meta.height) * LOGO_H * 10) / 10, LOGO_W_MAX)
-      }
-      const targetH = Math.round(LOGO_H * (96 / 25.4))
-      const targetW = Math.round(LOGO_W * (96 / 25.4))
-      const resized: Buffer = await sharp(buf)
-        .resize(targetW, targetH, { fit: 'inside', withoutEnlargement: true })
-        .png()
-        .toBuffer()
-      logoBase64 = `data:image/png;base64,${resized.toString('base64')}`
-      console.log(`[PDF] logo embedded successfully | base64 length: ${logoBase64.length}`)
-    } else {
-      console.error('[PDF] mialab-logo-pdf.png not found in any candidate path — using text fallback')
-    }
-  }
-
-  if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', ML, y, LOGO_W, LOGO_H)
-  } else {
-    // Text fallback — only reached if the asset is genuinely missing
-    doc.setFontSize(15)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(180, 0, 0)
-    doc.text('MIALAB', ML, y + 8)
-  }
-
-  // ── DIAGNOSTIC STAMP (remove after confirming correct generator runs) ────────
-  doc.setFontSize(6)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(180, 0, 0)
-  doc.text('TEST — Mialab_Application/lib/pdf-generator.ts', ML, y - 1)
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  // Title to the right of the logo — vertically centred relative to 10mm logo height
-  const titleX = ML + LOGO_W + 3
-  doc.setFontSize(11)
+  // ── HEADER: TITLE + META ────────────────────────────────────────────────────
+  doc.setFontSize(13)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(25, 25, 25)
-  doc.text('Mialab Account Application', titleX, y + 4)
+  doc.text('Mialab Account Application', ML, y + 4)
 
-  doc.setFontSize(7)
+  doc.setFontSize(7.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(115, 115, 115)
-  doc.text('Wholesale Optical Laboratory', titleX, y + 8.5)
+  doc.text('Wholesale Optical Laboratory', ML, y + 9.5)
 
-  // Application ID + Submitted date — top right, aligned with header
+  // Application ID + Submitted date — right-aligned, vertically matched
   doc.setFontSize(6.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(135, 135, 135)
   doc.text(`Application ID: ${applicationId}`, PW - ML, y + 4, { align: 'right' })
-  doc.text(`Submitted: ${submittedAt}`, PW - ML, y + 8.5, { align: 'right' })
+  doc.text(`Submitted: ${submittedAt}`, PW - ML, y + 9.5, { align: 'right' })
 
-  y += LOGO_H + 2
+  y += 16
 
   // Full-width divider
   doc.setDrawColor(205, 205, 205)
