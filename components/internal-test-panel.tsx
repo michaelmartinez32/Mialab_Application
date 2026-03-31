@@ -64,7 +64,8 @@ export function InternalTestPanel() {
     setPdfStatus('loading')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/internal/test-pdf')
+      const lang = sessionStorage.getItem('mialab-lang') || 'en'
+      const res = await fetch(`/api/internal/test-pdf?lang=${lang}`)
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || `HTTP ${res.status}`)
@@ -86,7 +87,8 @@ export function InternalTestPanel() {
     setEmailSentTo('')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/internal/test-email', { method: 'POST' })
+      const lang = sessionStorage.getItem('mialab-lang') || 'en'
+      const res = await fetch(`/api/internal/test-email?lang=${lang}`, { method: 'POST' })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`)
       setEmailSentTo(body.sentTo || '')

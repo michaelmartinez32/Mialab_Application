@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { generateApplicationPDF } from '@/lib/pdf-generator'
 import { sendEmail, getMialabInternalEmail } from '@/lib/email-service'
 import { generateInternalNotificationEmail, EMAIL_SUBJECTS } from '@/lib/email-templates'
 import type { ApplicationFormData } from '@/lib/form-types'
+import type { Lang } from '@/lib/translations'
 
 const TEST_FORM_DATA: ApplicationFormData = {
   practiceName: '[TEST] Sunshine Eye Care Associates',
@@ -73,8 +74,9 @@ const TEST_FORM_DATA: ApplicationFormData = {
   }),
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const lang = (request.nextUrl.searchParams.get('lang') === 'es' ? 'es' : 'en') as Lang
     const testApplicationId = `TEST-${Date.now()}`
     const submittedAt = new Date().toLocaleString('en-US', {
       year: 'numeric', month: 'long', day: 'numeric',
@@ -82,6 +84,7 @@ export async function POST() {
     })
 
     console.log('[internal/test-email] applicationId:', testApplicationId)
+    console.log('[internal/test-email] lang:', lang)
     console.log('[internal/test-email] formData.shippingSameAsBilling:', TEST_FORM_DATA.shippingSameAsBilling)
     console.log('[internal/test-email] formData keys:', Object.keys(TEST_FORM_DATA).join(', '))
 
@@ -91,6 +94,7 @@ export async function POST() {
       applicationId: testApplicationId,
       signatureType: 'typed',
       submittedAt,
+      lang,
     })
     const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
     const pdfBase64 = pdfBuffer.toString('base64')
@@ -108,7 +112,7 @@ export async function POST() {
     const internalEmail = getMialabInternalEmail()
     const result = await sendEmail(
       internalEmail,
-      `[INTERNAL TEST] ${EMAIL_SUBJECTS.internal}`,
+      `[INTERNAL TEST${lang === 'es' ? ' · ES' : ''}] ${EMAIL_SUBJECTS.internalNotification}`,
       emailHtml,
       [{
         content: pdfBase64,

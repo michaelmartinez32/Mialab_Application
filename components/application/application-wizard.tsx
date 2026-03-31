@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ApplicationHeader } from './application-header'
 import { SectionProgress } from './section-progress'
 import { TrustIndicators } from './trust-indicators'
@@ -37,6 +37,11 @@ export function ApplicationWizard() {
   const [signatureType, setSignatureType] = useState<'typed' | 'drawn'>('drawn')
   const [resaleCertificatePath, setResaleCertificatePath] = useState<string | null>(null)
   const [lang, setLang] = useState<Lang>('en')
+
+  // Persist lang to sessionStorage so the internal test panel can read it
+  useEffect(() => {
+    sessionStorage.setItem('mialab-lang', lang)
+  }, [lang])
 
   const T = translations[lang]
 

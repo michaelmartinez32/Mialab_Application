@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { generateApplicationPDF } from '@/lib/pdf-generator'
 import type { ApplicationFormData } from '@/lib/form-types'
+import type { Lang } from '@/lib/translations'
 
 const TEST_FORM_DATA: ApplicationFormData = {
   practiceName: '[TEST] Sunshine Eye Care Associates',
@@ -71,8 +72,9 @@ const TEST_FORM_DATA: ApplicationFormData = {
   }),
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const lang = (request.nextUrl.searchParams.get('lang') === 'es' ? 'es' : 'en') as Lang
     const pdfBlob = await generateApplicationPDF({
       formData: TEST_FORM_DATA,
       applicationId: `TEST-${Date.now()}`,
@@ -81,6 +83,7 @@ export async function GET() {
         year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
       }),
+      lang,
     })
 
     const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
