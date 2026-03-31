@@ -18,22 +18,6 @@ const PHASE_INTERNAL_STEPS: Record<number, number[]> = {
   3: [7, 8, 9, 10], // Credit, Payment, Terms, Signature
 }
 
-// Maps internal step number → traversal position (1–10 in actual flow order).
-// Without this, the progress bar goes backwards when phase 1 (steps 1,4,5) hands
-// off to phase 2 (steps 2,3,6) because step 2 < step 5 numerically.
-const STEP_TO_ORDERED_POSITION: Record<number, number> = {
-  1: 1,
-  4: 2,
-  5: 3,
-  2: 4,
-  3: 5,
-  6: 6,
-  7: 7,
-  8: 8,
-  9: 9,
-  10: 10,
-}
-
 // Get which parent phase the internal step belongs to
 function getParentPhase(internalStep: number): number {
   if (internalStep === 1 || internalStep === 4 || internalStep === 5) return 1
@@ -52,36 +36,12 @@ function isOnPhase(phase: number, currentInternalStep: number): boolean {
   return getParentPhase(currentInternalStep) === phase
 }
 
-// Desktop stepper line: gradual progress within each phase segment.
-// Segment 1 spans 0%–50% (between circle 1 and circle 2).
-// Segment 2 spans 50%–100% (between circle 2 and circle 3).
-// Phase 3 has no next circle so clamps to 100%.
-function getStepperLinePercent(currentStep: number, currentPhase: number): number {
-  const stepsInPhase = PHASE_INTERNAL_STEPS[currentPhase]
-  const indexInPhase = stepsInPhase.indexOf(currentStep) // 0-based
-  const stepsCount = stepsInPhase.length
-
-  if (currentPhase === 1) {
-    // Segment fills from 0% toward 50% as sub-steps advance
-    return (indexInPhase / stepsCount) * 50
-  }
-  if (currentPhase === 2) {
-    // Segment fills from 50% toward 100% as sub-steps advance
-    return 50 + (indexInPhase / stepsCount) * 50
-  }
-  // Phase 3 — all prior segments are complete
-  return 100
-}
-
 export function SectionProgress({ currentStep, totalSteps }: SectionProgressProps) {
   const currentPhase = getParentPhase(currentStep)
 
-  // Ordered position ensures the bar always moves forward (never backwards)
-  const orderedPosition = STEP_TO_ORDERED_POSITION[currentStep] ?? currentStep
-  const progressPercent = ((orderedPosition - 1) / (totalSteps - 1)) * 100
-
-  // Desktop stepper line — gradual within phase, never resets
-  const stepperLinePercent = getStepperLinePercent(currentStep, currentPhase)
+  // Navigation is strictly sequential (1→2→3→...→10), so currentStep always
+  // increases — this formula always moves forward, never resets.
+  const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100
 
   return (
     <div className="w-full space-y-4">
@@ -111,10 +71,10 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
           {/* Progress line background */}
           <div className="absolute left-0 right-0 top-6 h-0.5 bg-gray-200" />
 
-          {/* Progress line filled — gradual, never resets */}
+          {/* Progress line filled — same source as percentage text, always moves forward */}
           <div
             className="absolute left-0 top-6 h-0.5 bg-green-500 transition-all duration-500"
-            style={{ width: `${stepperLinePercent}%` }}
+            style={{ width: `${progressPercent}%` }}
           />
 
           {/* Steps */}
