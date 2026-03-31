@@ -16,6 +16,24 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   const T = translations[lang ?? 'en'].pdf
   const activeAgreementText = (lang === 'es') ? agreementTextEs : agreementText
   const activeAcknowledgmentLabels = (lang === 'es') ? acknowledgmentLabelsEs : acknowledgmentLabels
+
+  // Spanish-specific layout config — tighter spacing to fit one page.
+  // English values are unchanged; Spanish values are trimmed just enough to
+  // keep the document clean while eliminating the second page overflow.
+  const isEs = lang === 'es'
+  const CFG = {
+    RH:           isEs ? 4.0  : 4.5,   // standard row height (mm)
+    SEC_PRE:      isEs ? 1.8  : 2.5,   // vertical gap before section title
+    SEC_POST:     isEs ? 3.5  : 4.5,   // vertical gap after section divider line
+    AGR_FONT:     isEs ? 5.6  : 5.9,   // agreement paragraph font size
+    AGR_LH:       isEs ? 2.55 : 2.75,  // agreement line height (mm)
+    AGR_PARA_GAP: isEs ? 0.5  : 0.9,   // gap between agreement paragraphs
+    AGR_POST:     isEs ? 1.2  : 2.0,   // space after last agreement paragraph
+    ACK_H_MIN:    isEs ? 3.8  : 4.3,   // min height per acknowledgement item
+    ACK_LH:       isEs ? 3.5  : 3.8,   // line height inside acknowledgement text
+    ACK_POST:     isEs ? 1.5  : 2.5,   // space after acknowledgements block
+  }
+
   const doc = new jsPDF()
 
   // ── PAGE GEOMETRY ───────────────────────────────────────────────────────────
@@ -33,7 +51,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   const LW = 36
 
   // Vertical rhythm
-  const RH = 4.5          // standard row height (mm)
+  const RH = CFG.RH       // standard row height (mm) — lang-specific
   const FLOOR = PH - 9   // don't render below this (footer zone)
 
   let y = 10
@@ -49,7 +67,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   // ── SECTION HEADER ──────────────────────────────────────────────────────────
   const sectionHeader = (title: string) => {
     ensureSpace(10)
-    y += 2.5
+    y += CFG.SEC_PRE
     doc.setFontSize(7.5)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(180, 0, 0)
@@ -58,7 +76,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     doc.setDrawColor(180, 0, 0)
     doc.setLineWidth(0.2)
     doc.line(ML, y, ML + CW, y)
-    y += 4.5
+    y += CFG.SEC_POST
     doc.setTextColor(20, 20, 20)
   }
 
@@ -254,23 +272,22 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   // ── ACCOUNT AND CREDIT AGREEMENT ─────────────────────────────────────────────
   sectionHeader(T.sections.agreement)
 
-  doc.setFontSize(5.9)
+  doc.setFontSize(CFG.AGR_FONT)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(58, 58, 58)
 
-  const AGR_LH = 2.75  // tighter line height for agreement text
   const paragraphs = activeAgreementText.split('\n\n').filter(p => p.trim())
 
   for (const para of paragraphs) {
     const lines = doc.splitTextToSize(para.trim(), CW)
-    ensureSpace(lines.length * AGR_LH + 1.2)
+    ensureSpace(lines.length * CFG.AGR_LH + 1.2)
     for (const line of lines) {
       doc.text(line, ML, y)
-      y += AGR_LH
+      y += CFG.AGR_LH
     }
-    y += 0.9  // tight paragraph spacing
+    y += CFG.AGR_PARA_GAP
   }
-  y += 2
+  y += CFG.AGR_POST
 
   // ── ACKNOWLEDGEMENTS ─────────────────────────────────────────────────────────
   sectionHeader(T.sections.acknowledgements)
@@ -286,7 +303,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     const label = activeAcknowledgmentLabels[ack.key]
     doc.setFontSize(7.5)
     const labelLines = doc.splitTextToSize(label, CW - 10)
-    const h = Math.max(4.3, labelLines.length * 3.8)
+    const h = Math.max(CFG.ACK_H_MIN, labelLines.length * CFG.ACK_LH)
     ensureSpace(h)
 
     // Checkbox
@@ -307,7 +324,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     y += h
   }
 
-  y += 2.5
+  y += CFG.ACK_POST
 
   // ── ELECTRONIC SIGNATURE ─────────────────────────────────────────────────────
   sectionHeader(T.sections.signature)

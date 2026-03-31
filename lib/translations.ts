@@ -697,7 +697,7 @@ const es: typeof en = {
       signature: 'Firma Electrónica',
     },
     fields: {
-      practiceName: 'Nombre del Consultorio / Negocio',
+      practiceName: 'Nombre del Negocio',
       dbaName: 'Nombre Comercial (DBA)',
       doctorOwner: 'Doctor / Propietario',
       primaryContact: 'Contacto Principal',
