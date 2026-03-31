@@ -53,7 +53,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     doc.setDrawColor(180, 0, 0)
     doc.setLineWidth(0.2)
     doc.line(ML, y, ML + CW, y)
-    y += 2.5
+    y += 4.5
     doc.setTextColor(20, 20, 20)
   }
 
