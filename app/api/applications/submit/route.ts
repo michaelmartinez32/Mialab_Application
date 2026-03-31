@@ -21,6 +21,7 @@ interface SubmissionPayload {
   formData: ApplicationFormData
   signatureType: 'typed' | 'drawn'
   resaleCertificatePath?: string
+  lang?: 'en' | 'es'
 }
 
 export async function POST(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     const payload: SubmissionPayload = await request.json()
-    const { formData, signatureType, resaleCertificatePath } = payload
+    const { formData, signatureType, resaleCertificatePath, lang = 'en' } = payload
 
     // Validate required fields
     if (!formData.printedName || !formData.signatureData || !formData.agreeToTerms) {
@@ -150,6 +151,7 @@ export async function POST(request: NextRequest) {
         applicationId,
         signatureType,
         submittedAt: submittedAtFormatted,
+        lang,
       })
       const pdfSizeKB = Math.round(pdfBlob.size / 1024)
       console.log(`[submit:${applicationId}] PDF generated OK — size: ${pdfSizeKB}KB (${(pdfSizeKB / 1024).toFixed(2)}MB)`)
@@ -283,6 +285,7 @@ export async function POST(request: NextRequest) {
     // 11a. Customer confirmation — PDF attached
     const customerEmailHtml = generateCustomerConfirmationEmail({
       primaryContactName: formData.primaryContactName,
+      lang,
     })
 
     console.log(`[submit:${applicationId}] Sending customer email to: ${formData.email} (attachment: ${customerAttachments ? 'Mialab-Application.pdf' : 'none — PDF generation failed'})`)
@@ -291,7 +294,7 @@ export async function POST(request: NextRequest) {
     }
     const customerEmailResult = await sendEmail(
       formData.email,
-      EMAIL_SUBJECTS.customerConfirmation,
+      lang === 'es' ? EMAIL_SUBJECTS.customerConfirmationEs : EMAIL_SUBJECTS.customerConfirmation,
       customerEmailHtml,
       customerAttachments
     )
@@ -303,7 +306,7 @@ export async function POST(request: NextRequest) {
       action_details: {
         email_type: 'customer_confirmation',
         recipient: formData.email,
-        subject: EMAIL_SUBJECTS.customerConfirmation,
+        subject: lang === 'es' ? EMAIL_SUBJECTS.customerConfirmationEs : EMAIL_SUBJECTS.customerConfirmation,
         success: customerEmailResult.success,
         message_id: customerEmailResult.messageId,
         error: customerEmailResult.error,

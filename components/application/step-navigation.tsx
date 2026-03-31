@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { translations, type Lang } from '@/lib/translations'
 
 interface StepNavigationProps {
   currentStep: number
@@ -11,6 +12,7 @@ interface StepNavigationProps {
   isSubmitting?: boolean
   canProceed?: boolean
   isLastStep?: boolean
+  lang: Lang
 }
 
 export function StepNavigation({
@@ -21,7 +23,9 @@ export function StepNavigation({
   isSubmitting = false,
   canProceed = true,
   isLastStep = false,
+  lang,
 }: StepNavigationProps) {
+  const T = translations[lang].nav
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -34,7 +38,7 @@ export function StepNavigation({
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Previous
+            {T.previous}
           </Button>
         )}
       </div>
@@ -45,7 +49,7 @@ export function StepNavigation({
           className="text-muted-foreground"
           disabled={isSubmitting}
         >
-          Save and Continue Later
+          {T.saveAndContinueLater}
         </Button>
         <Button
           type="button"
@@ -56,13 +60,13 @@ export function StepNavigation({
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Submitting...
+              {T.submitting}
             </>
           ) : isLastStep ? (
-            'Submit Application'
+            T.submitApplication
           ) : (
             <>
-              Continue
+              {T.continue}
               <ArrowRight className="h-4 w-4" />
             </>
           )}
@@ -81,7 +85,9 @@ export function MobileStepNavigation({
   isSubmitting = false,
   canProceed = true,
   isLastStep = false,
+  lang,
 }: StepNavigationProps) {
+  const T = translations[lang].nav
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-white p-4 shadow-lg md:hidden">
       <div className="flex items-center justify-between gap-3">
@@ -94,7 +100,7 @@ export function MobileStepNavigation({
             className="flex-1"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {T.back}
           </Button>
         ) : (
           <div className="flex-1" />
@@ -108,13 +114,13 @@ export function MobileStepNavigation({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Submitting...
+              {T.submitting}
             </>
           ) : isLastStep ? (
-            'Submit'
+            T.submit
           ) : (
             <>
-              Continue
+              {T.continue}
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}

@@ -5,28 +5,31 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { ApplicationFormData } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface Step5Props {
   formData: ApplicationFormData
   updateFormData: (data: Partial<ApplicationFormData>) => void
   errors: Record<string, string>
+  lang: Lang
 }
 
-export function Step5OrderingPreferences({ formData, updateFormData, errors }: Step5Props) {
+export function Step5OrderingPreferences({ formData, updateFormData, errors, lang }: Step5Props) {
+  const T = translations[lang].step5
   return (
     <Card className="premium-card border-0">
       <CardHeader className="pb-6">
         <CardTitle className="text-2xl font-semibold text-[#b40000]">
-          Ordering Preferences
+          {T.title}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Let us know how your practice will submit orders to Mialab.
+          {T.subtitle}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <Label className="text-[#474748]">
-            How will your practice primarily submit orders to Mialab? <span className="text-red-500">*</span>
+            {T.orderingMethodLabel} <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
             value={formData.orderingMethod}
@@ -36,36 +39,36 @@ export function Step5OrderingPreferences({ formData, updateFormData, errors }: S
             <div className="flex items-center space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50">
               <RadioGroupItem value="mialab-portal" id="order-mialab" />
               <Label htmlFor="order-mialab" className="cursor-pointer font-normal">
-                <span className="font-medium">Mialab Online Ordering Portal</span>
+                <span className="font-medium">{T.options['mialab-portal'].label}</span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Use our dedicated online portal for order submission
+                  {T.options['mialab-portal'].description}
                 </p>
               </Label>
             </div>
             <div className="flex items-center space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50">
               <RadioGroupItem value="visionweb" id="order-visionweb" />
               <Label htmlFor="order-visionweb" className="cursor-pointer font-normal">
-                <span className="font-medium">VisionWeb</span>
+                <span className="font-medium">{T.options['visionweb'].label}</span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Submit orders through VisionWeb integration
+                  {T.options['visionweb'].description}
                 </p>
               </Label>
             </div>
             <div className="flex items-center space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50">
               <RadioGroupItem value="other-integration" id="order-other" />
               <Label htmlFor="order-other" className="cursor-pointer font-normal">
-                <span className="font-medium">Other Integration</span>
+                <span className="font-medium">{T.options['other-integration'].label}</span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Use a different practice management system or integration
+                  {T.options['other-integration'].description}
                 </p>
               </Label>
             </div>
             <div className="flex items-center space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50">
               <RadioGroupItem value="not-sure" id="order-not-sure" />
               <Label htmlFor="order-not-sure" className="cursor-pointer font-normal">
-                <span className="font-medium">Not Sure Yet</span>
+                <span className="font-medium">{T.options['not-sure'].label}</span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  We&apos;ll help you decide the best option for your practice
+                  {T.options['not-sure'].description}
                 </p>
               </Label>
             </div>
@@ -78,13 +81,13 @@ export function Step5OrderingPreferences({ formData, updateFormData, errors }: S
         {formData.orderingMethod === 'other-integration' && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
             <Label htmlFor="otherOrderingMethod" className="text-[#474748]">
-              Describe your ordering method <span className="text-red-500">*</span>
+              {T.otherMethodLabel} <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="otherOrderingMethod"
               value={formData.otherOrderingMethod}
               onChange={(e) => updateFormData({ otherOrderingMethod: e.target.value })}
-              placeholder="Please describe your preferred ordering method or integration..."
+              placeholder={T.otherMethodPlaceholder}
               rows={4}
               className={errors.otherOrderingMethod ? 'border-red-500' : ''}
             />

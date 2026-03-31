@@ -2,11 +2,12 @@
 
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { VISIBLE_STEP_TITLES } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface SectionProgressProps {
   currentStep: number // Internal step (1-10)
   totalSteps: number
+  lang: Lang
 }
 
 const VISIBLE_TOTAL_STEPS = 3
@@ -36,7 +37,8 @@ function isOnPhase(phase: number, currentInternalStep: number): boolean {
   return getParentPhase(currentInternalStep) === phase
 }
 
-export function SectionProgress({ currentStep, totalSteps }: SectionProgressProps) {
+export function SectionProgress({ currentStep, totalSteps, lang }: SectionProgressProps) {
+  const T = translations[lang].progress
   const currentPhase = getParentPhase(currentStep)
 
   // Navigation is strictly sequential (1→2→3→...→10), so currentStep always
@@ -48,7 +50,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
       {/* Parent Phase Header */}
       <div className="text-center">
         <h2 className="text-xl font-bold text-[#b40000]">
-          {VISIBLE_STEP_TITLES[currentPhase - 1]}
+          {T.phases[currentPhase - 1]}
         </h2>
       </div>
 
@@ -61,7 +63,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
           />
         </div>
         <p className="mt-1 text-center text-xs text-muted-foreground">
-          {Math.round(progressPercent)}% complete
+          {T.percentComplete(Math.round(progressPercent))}
         </p>
       </div>
 
@@ -79,7 +81,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
 
           {/* Steps */}
           <div className="relative flex justify-between">
-            {VISIBLE_STEP_TITLES.map((title, index) => {
+            {T.phases.map((title, index) => {
               const phaseNumber = index + 1
               const isCompleted = isPhaseComplete(phaseNumber, currentStep)
               const isCurrent = isOnPhase(phaseNumber, currentStep)
@@ -125,7 +127,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
       {/* Tablet view - compact stepper */}
       <div className="hidden md:block lg:hidden">
         <div className="flex items-center justify-center gap-1">
-          {VISIBLE_STEP_TITLES.map((title, index) => {
+          {T.phases.map((title, index) => {
             const phaseNumber = index + 1
             const isCompleted = isPhaseComplete(phaseNumber, currentStep)
             const isCurrent = isOnPhase(phaseNumber, currentStep)
@@ -162,7 +164,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
 
       {/* Mobile view - minimal dots */}
       <div className="flex items-center justify-center gap-3 md:hidden">
-        {VISIBLE_STEP_TITLES.map((_, index) => {
+        {T.phases.map((_, index) => {
           const phaseNumber = index + 1
           const isCompleted = isPhaseComplete(phaseNumber, currentStep)
           const isCurrent = isOnPhase(phaseNumber, currentStep)

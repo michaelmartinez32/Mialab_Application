@@ -26,3 +26,28 @@ export const acknowledgmentLabels = {
   acknowledgeProcessingFee: 'I acknowledge that credit card payments are subject to a 3% processing fee.',
   agreeToTerms: 'I have read and agree to the Mialab Account and Credit Agreement.',
 }
+
+export const agreementTextEs = `El solicitante que firma a continuación ("Solicitante") declara y garantiza que está debidamente autorizado para presentar esta solicitud y solicitar crédito en nombre de la empresa aquí identificada ("Empresa") y para vincular a la Empresa a los términos y condiciones de este Acuerdo. El Solicitante también declara que toda la información proporcionada en esta solicitud es verdadera, exacta y completa.
+
+El Solicitante autoriza a Mialab Inc. ("Mialab") a investigar la solvencia crediticia de la Empresa y sus directivos, incluyendo el contacto con agencias de informes crediticios e instituciones financieras.
+
+Las cuentas aprobadas para crédito generalmente tienen términos de pago Neto 30, a menos que se acuerde lo contrario por escrito. Cualquier saldo no pagado dentro de los términos de pago establecidos puede estar sujeto a un cargo financiero del 1.5% mensual (18% anual) o el máximo permitido por ley.
+
+El Solicitante otorga a Mialab un interés de seguridad de compra sobre todos los bienes adquiridos de Mialab.
+
+El Solicitante acepta pagar todos los costos razonables de cobro, incluyendo honorarios de abogados y costas judiciales.
+
+Las facturas pueden pagarse con cheque, transferencia ACH, tarjeta de débito o tarjeta de crédito. Los pagos con tarjeta de crédito están sujetos a una tarifa de procesamiento del 3%. Los pagos con tarjeta de débito no incluyen tarifa de procesamiento.
+
+Este Acuerdo se regirá por las leyes del Estado de Florida.
+
+Si el individuo que firma este Acuerdo es propietario o director de la empresa, dicho individuo reconoce que puede ser personalmente responsable del pago de la cuenta si la empresa no cumple con sus obligaciones.
+
+Al firmar electrónicamente a continuación, el Solicitante reconoce que ha leído y acepta los términos de este Acuerdo.`
+
+export const acknowledgmentLabelsEs = {
+  certifyTrueAccurate: 'Certifico que la información proporcionada es verdadera y exacta.',
+  authorizeCreditCheck: 'Autorizo a Mialab a verificar la información crediticia y comercial.',
+  acknowledgeProcessingFee: 'Reconozco que los pagos con tarjeta de crédito están sujetos a una tarifa de procesamiento del 3%.',
+  agreeToTerms: 'He leído y acepto el Acuerdo de Cuenta y Crédito de Mialab.',
+}

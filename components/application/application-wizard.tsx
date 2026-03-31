@@ -17,6 +17,7 @@ import { Step8PaymentPreferences } from './steps/step-8-payment-preferences'
 import { Step9TermsAgreement } from './steps/step-9-terms-agreement'
 import { Step10ElectronicSignature } from './steps/step-10-electronic-signature'
 import { initialFormData, type ApplicationFormData } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 const TOTAL_STEPS = 10
 
@@ -35,6 +36,9 @@ export function ApplicationWizard() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [signatureType, setSignatureType] = useState<'typed' | 'drawn'>('drawn')
   const [resaleCertificatePath, setResaleCertificatePath] = useState<string | null>(null)
+  const [lang, setLang] = useState<Lang>('en')
+
+  const T = translations[lang]
 
   const updateFormData = useCallback((data: Partial<ApplicationFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))
@@ -51,77 +55,78 @@ export function ApplicationWizard() {
 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {}
+    const V = T.validation
 
     switch (step) {
       case 1:
-        if (!formData.practiceName.trim()) newErrors.practiceName = 'Practice name is required'
-        if (!formData.doctorOwnerName.trim()) newErrors.doctorOwnerName = 'Doctor/Owner name is required'
-        if (!formData.primaryContactName.trim()) newErrors.primaryContactName = 'Primary contact name is required'
-        if (!formData.email.trim()) newErrors.email = 'Email is required'
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email format'
-        if (!formData.phone.trim()) newErrors.phone = 'Phone number is required'
-        if (!formData.businessType) newErrors.businessType = 'Business type is required'
-        if (!formData.yearsInBusiness) newErrors.yearsInBusiness = 'Years in business is required'
-        if (!formData.isOwnerPrincipal) newErrors.isOwnerPrincipal = 'Please select an option'
+        if (!formData.practiceName.trim()) newErrors.practiceName = V.practiceNameRequired
+        if (!formData.doctorOwnerName.trim()) newErrors.doctorOwnerName = V.doctorOwnerRequired
+        if (!formData.primaryContactName.trim()) newErrors.primaryContactName = V.primaryContactRequired
+        if (!formData.email.trim()) newErrors.email = V.emailRequired
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = V.emailInvalid
+        if (!formData.phone.trim()) newErrors.phone = V.phoneRequired
+        if (!formData.businessType) newErrors.businessType = V.businessTypeRequired
+        if (!formData.yearsInBusiness) newErrors.yearsInBusiness = V.yearsInBusinessRequired
+        if (!formData.isOwnerPrincipal) newErrors.isOwnerPrincipal = V.pleaseSelectOption
         break
       case 2:
-        if (!formData.billingAddress1.trim()) newErrors.billingAddress1 = 'Billing address is required'
-        if (!formData.billingCity.trim()) newErrors.billingCity = 'City is required'
-        if (!formData.billingState) newErrors.billingState = 'State is required'
-        if (!formData.billingZip.trim()) newErrors.billingZip = 'ZIP code is required'
-        if (!formData.apContactName.trim()) newErrors.apContactName = 'AP contact name is required'
-        if (!formData.apEmail.trim()) newErrors.apEmail = 'AP email is required'
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.apEmail)) newErrors.apEmail = 'Invalid email format'
+        if (!formData.billingAddress1.trim()) newErrors.billingAddress1 = V.billingAddress1Required
+        if (!formData.billingCity.trim()) newErrors.billingCity = V.cityRequired
+        if (!formData.billingState) newErrors.billingState = V.stateRequired
+        if (!formData.billingZip.trim()) newErrors.billingZip = V.zipRequired
+        if (!formData.apContactName.trim()) newErrors.apContactName = V.apContactRequired
+        if (!formData.apEmail.trim()) newErrors.apEmail = V.apEmailRequired
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.apEmail)) newErrors.apEmail = V.emailInvalid
         break
       case 3:
         if (!formData.shippingSameAsBilling) {
-          if (!formData.shippingAddress1.trim()) newErrors.shippingAddress1 = 'Shipping address is required'
-          if (!formData.shippingCity.trim()) newErrors.shippingCity = 'City is required'
-          if (!formData.shippingState) newErrors.shippingState = 'State is required'
-          if (!formData.shippingZip.trim()) newErrors.shippingZip = 'ZIP code is required'
+          if (!formData.shippingAddress1.trim()) newErrors.shippingAddress1 = V.shippingAddress1Required
+          if (!formData.shippingCity.trim()) newErrors.shippingCity = V.cityRequired
+          if (!formData.shippingState) newErrors.shippingState = V.stateRequired
+          if (!formData.shippingZip.trim()) newErrors.shippingZip = V.zipRequired
         }
         break
       case 4:
-        if (!formData.taxId.trim()) newErrors.taxId = 'Tax ID is required'
-        if (!formData.numberOfLocations) newErrors.numberOfLocations = 'Number of locations is required'
-        if (!formData.monthlyLabVolume) newErrors.monthlyLabVolume = 'Monthly lab volume is required'
-        if (!formData.weeklyExams) newErrors.weeklyExams = 'Weekly exams is required'
-        if (!formData.edgeLensesInHouse) newErrors.edgeLensesInHouse = 'Please select an option'
-        if (!formData.labOrdersManager) newErrors.labOrdersManager = 'Please select who manages lab orders'
-        if (!formData.planToBeginSending) newErrors.planToBeginSending = 'Please select a timeline'
-        if (!formData.mainReason) newErrors.mainReason = 'Please select a reason'
+        if (!formData.taxId.trim()) newErrors.taxId = V.taxIdRequired
+        if (!formData.numberOfLocations) newErrors.numberOfLocations = V.numLocationsRequired
+        if (!formData.monthlyLabVolume) newErrors.monthlyLabVolume = V.monthlyVolumeRequired
+        if (!formData.weeklyExams) newErrors.weeklyExams = V.weeklyExamsRequired
+        if (!formData.edgeLensesInHouse) newErrors.edgeLensesInHouse = V.pleaseSelectOption
+        if (!formData.labOrdersManager) newErrors.labOrdersManager = V.labManagerRequired
+        if (!formData.planToBeginSending) newErrors.planToBeginSending = V.planToBeginRequired
+        if (!formData.mainReason) newErrors.mainReason = V.mainReasonRequired
         break
       case 5:
-        if (!formData.orderingMethod) newErrors.orderingMethod = 'Please select an ordering method'
+        if (!formData.orderingMethod) newErrors.orderingMethod = V.orderingMethodRequired
         if (formData.orderingMethod === 'other-integration' && !formData.otherOrderingMethod.trim()) {
-          newErrors.otherOrderingMethod = 'Please describe your ordering method'
+          newErrors.otherOrderingMethod = V.describeMethodRequired
         }
         break
       case 6:
-        if (!formData.hasResaleCertificate) newErrors.hasResaleCertificate = 'Please select an option'
+        if (!formData.hasResaleCertificate) newErrors.hasResaleCertificate = V.resaleCertRequired
         if (formData.hasResaleCertificate === 'yes' && !formData.resaleCertificateFile) {
-          newErrors.resaleCertificateFile = 'Please upload your resale certificate'
+          newErrors.resaleCertificateFile = V.uploadCertRequired
         }
         break
       case 7:
-        if (!formData.applyForCredit) newErrors.applyForCredit = 'Please select an option'
+        if (!formData.applyForCredit) newErrors.applyForCredit = V.creditDecisionRequired
         if (formData.applyForCredit === 'yes' && !formData.requestedCreditAmount.trim()) {
-          newErrors.requestedCreditAmount = 'Please enter a credit amount'
+          newErrors.requestedCreditAmount = V.creditAmountRequired
         }
         break
       case 8:
-        if (!formData.paymentMethod) newErrors.paymentMethod = 'Please select a payment method'
+        if (!formData.paymentMethod) newErrors.paymentMethod = V.paymentMethodRequired
         break
       case 9:
-        if (!formData.certifyTrueAccurate || !formData.authorizeCreditCheck || 
+        if (!formData.certifyTrueAccurate || !formData.authorizeCreditCheck ||
             !formData.acknowledgeProcessingFee || !formData.agreeToTerms) {
-          newErrors.agreements = 'Please accept all agreements to continue'
+          newErrors.agreements = V.allAgreementsRequired
         }
         break
       case 10:
-        if (!formData.signatureData) newErrors.signatureData = 'Signature is required'
-        if (!formData.printedName.trim()) newErrors.printedName = 'Printed name is required'
-        if (!formData.title.trim()) newErrors.title = 'Title/Position is required'
+        if (!formData.signatureData) newErrors.signatureData = V.signatureRequired
+        if (!formData.printedName.trim()) newErrors.printedName = V.printedNameRequired
+        if (!formData.title.trim()) newErrors.title = V.titleRequired
         break
     }
 
@@ -162,7 +167,7 @@ export function ApplicationWizard() {
     try {
       // Generate a temporary ID for file uploads before submission
       const tempId = crypto.randomUUID()
-      
+
       // Upload resale certificate if provided
       let certificatePath = resaleCertificatePath
       if (formData.resaleCertificateFile && !certificatePath) {
@@ -180,6 +185,7 @@ export function ApplicationWizard() {
           formData,
           signatureType,
           resaleCertificatePath: certificatePath,
+          lang,
         }),
       })
 
@@ -197,7 +203,7 @@ export function ApplicationWizard() {
 
     } catch (error) {
       console.error('Submission error:', error)
-      setSubmitError(error instanceof Error ? error.message : 'Failed to submit application. Please try again.')
+      setSubmitError(error instanceof Error ? error.message : T.validation.submitFailed)
     } finally {
       setIsSubmitting(false)
     }
@@ -225,10 +231,11 @@ export function ApplicationWizard() {
     return (
       <div className="min-h-screen bg-white">
         <ApplicationHeader />
-        <ConfirmationPage 
+        <ConfirmationPage
           applicationId={submissionResult.applicationId}
           submittedAt={submissionResult.submittedAt}
           email={formData.email}
+          lang={lang}
         />
       </div>
     )
@@ -237,31 +244,32 @@ export function ApplicationWizard() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1PracticeInfo formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step1PracticeInfo formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 2:
-        return <Step2BillingInfo formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step2BillingInfo formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 3:
-        return <Step3ShippingInfo formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step3ShippingInfo formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 4:
-        return <Step4BusinessDetails formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step4BusinessDetails formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 5:
-        return <Step5OrderingPreferences formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step5OrderingPreferences formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 6:
-        return <Step6SalesTax formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step6SalesTax formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 7:
-        return <Step7CreditApplication formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step7CreditApplication formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 8:
-        return <Step8PaymentPreferences formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step8PaymentPreferences formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 9:
-        return <Step9TermsAgreement formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <Step9TermsAgreement formData={formData} updateFormData={updateFormData} errors={errors} lang={lang} />
       case 10:
         return (
-          <Step10ElectronicSignature 
-            formData={formData} 
-            updateFormData={updateFormData} 
+          <Step10ElectronicSignature
+            formData={formData}
+            updateFormData={updateFormData}
             errors={errors}
             signatureType={signatureType}
             onSignatureTypeChange={setSignatureType}
+            lang={lang}
           />
         )
       default:
@@ -272,31 +280,57 @@ export function ApplicationWizard() {
   return (
     <div className="min-h-screen bg-[#f5f5f7] pb-24 md:pb-8">
       <ApplicationHeader />
-      
+
       <main className="mx-auto max-w-3xl px-4 py-8">
+        {/* Language toggle */}
+        <div className="flex justify-end mb-2">
+          <div className="flex items-center rounded-full border border-gray-200 bg-white p-0.5 text-sm shadow-sm">
+            <button
+              onClick={() => setLang('en')}
+              className={`rounded-full px-3 py-1 transition-colors ${
+                lang === 'en'
+                  ? 'bg-[#b40000] text-white font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLang('es')}
+              className={`rounded-full px-3 py-1 transition-colors ${
+                lang === 'es'
+                  ? 'bg-[#b40000] text-white font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              ES
+            </button>
+          </div>
+        </div>
+
         {/* Page header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-[#474748]">
-            Open a Mialab Account
+            {T.wizard.title}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Complete the application below to open your account with Mialab.
+            {T.wizard.subtitle}
           </p>
         </div>
 
         {/* Trust indicators */}
         <div className="mb-6">
-          <TrustIndicators />
+          <TrustIndicators lang={lang} />
         </div>
 
         {/* Section progress indicator */}
         <div className="mb-8">
-          <SectionProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+          <SectionProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} lang={lang} />
         </div>
 
         {submitError && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <p className="font-medium">Submission Error</p>
+            <p className="font-medium">{T.wizard.submissionError}</p>
             <p>{submitError}</p>
           </div>
         )}
@@ -315,6 +349,7 @@ export function ApplicationWizard() {
             onNext={handleNext}
             isSubmitting={isSubmitting}
             isLastStep={currentStep === TOTAL_STEPS}
+            lang={lang}
           />
         </div>
       </main>
@@ -326,6 +361,7 @@ export function ApplicationWizard() {
         onNext={handleNext}
         isSubmitting={isSubmitting}
         isLastStep={currentStep === TOTAL_STEPS}
+        lang={lang}
       />
     </div>
   )

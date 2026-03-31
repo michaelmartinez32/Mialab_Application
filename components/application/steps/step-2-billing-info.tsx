@@ -12,34 +12,37 @@ import {
 } from '@/components/ui/select'
 import type { ApplicationFormData } from '@/lib/form-types'
 import { US_STATES } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface Step2Props {
   formData: ApplicationFormData
   updateFormData: (data: Partial<ApplicationFormData>) => void
   errors: Record<string, string>
+  lang: Lang
 }
 
-export function Step2BillingInfo({ formData, updateFormData, errors }: Step2Props) {
+export function Step2BillingInfo({ formData, updateFormData, errors, lang }: Step2Props) {
+  const T = translations[lang].step2
   return (
     <Card className="premium-card border-0">
       <CardHeader className="pb-6">
         <CardTitle className="text-2xl font-semibold text-[#b40000]">
-          Billing Information
+          {T.title}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Enter your billing address and accounts payable contact details.
+          {T.subtitle}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="billingAddress1" className="text-[#474748]">
-            Billing Address Line 1 <span className="text-red-500">*</span>
+            {T.address1Label} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="billingAddress1"
             value={formData.billingAddress1}
             onChange={(e) => updateFormData({ billingAddress1: e.target.value })}
-            placeholder="Street address"
+            placeholder={T.address1Placeholder}
             className={errors.billingAddress1 ? 'border-red-500' : ''}
           />
           {errors.billingAddress1 && (
@@ -49,26 +52,26 @@ export function Step2BillingInfo({ formData, updateFormData, errors }: Step2Prop
 
         <div className="space-y-2">
           <Label htmlFor="billingAddress2" className="text-[#474748]">
-            Billing Address Line 2 <span className="text-muted-foreground">(optional)</span>
+            {T.address2Label} <span className="text-muted-foreground">(optional)</span>
           </Label>
           <Input
             id="billingAddress2"
             value={formData.billingAddress2}
             onChange={(e) => updateFormData({ billingAddress2: e.target.value })}
-            placeholder="Suite, unit, building, floor, etc."
+            placeholder={T.address2Placeholder}
           />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="billingCity" className="text-[#474748]">
-              City <span className="text-red-500">*</span>
+              {T.cityLabel} <span className="text-red-500">*</span>
             </Label>
             <Input
               id="billingCity"
               value={formData.billingCity}
               onChange={(e) => updateFormData({ billingCity: e.target.value })}
-              placeholder="City"
+              placeholder={T.cityPlaceholder}
               className={errors.billingCity ? 'border-red-500' : ''}
             />
             {errors.billingCity && (
@@ -78,14 +81,14 @@ export function Step2BillingInfo({ formData, updateFormData, errors }: Step2Prop
 
           <div className="space-y-2">
             <Label htmlFor="billingState" className="text-[#474748]">
-              State <span className="text-red-500">*</span>
+              {T.stateLabel} <span className="text-red-500">*</span>
             </Label>
             <Select
               value={formData.billingState}
               onValueChange={(value) => updateFormData({ billingState: value })}
             >
               <SelectTrigger className={errors.billingState ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select state" />
+                <SelectValue placeholder={T.statePlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {US_STATES.map((state) => (
@@ -102,13 +105,13 @@ export function Step2BillingInfo({ formData, updateFormData, errors }: Step2Prop
 
           <div className="space-y-2">
             <Label htmlFor="billingZip" className="text-[#474748]">
-              ZIP Code <span className="text-red-500">*</span>
+              {T.zipLabel} <span className="text-red-500">*</span>
             </Label>
             <Input
               id="billingZip"
               value={formData.billingZip}
               onChange={(e) => updateFormData({ billingZip: e.target.value })}
-              placeholder="12345"
+              placeholder={T.zipPlaceholder}
               className={errors.billingZip ? 'border-red-500' : ''}
             />
             {errors.billingZip && (
@@ -118,17 +121,17 @@ export function Step2BillingInfo({ formData, updateFormData, errors }: Step2Prop
         </div>
 
         <div className="border-t pt-6">
-          <h3 className="mb-4 text-lg font-medium text-[#474748]">Accounts Payable Contact</h3>
+          <h3 className="mb-4 text-lg font-medium text-[#474748]">{T.apSectionTitle}</h3>
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="apContactName" className="text-[#474748]">
-                Contact Name <span className="text-red-500">*</span>
+                {T.apContactNameLabel} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="apContactName"
                 value={formData.apContactName}
                 onChange={(e) => updateFormData({ apContactName: e.target.value })}
-                placeholder="Accounts payable contact name"
+                placeholder={T.apContactNamePlaceholder}
                 className={errors.apContactName ? 'border-red-500' : ''}
               />
               {errors.apContactName && (
@@ -138,14 +141,14 @@ export function Step2BillingInfo({ formData, updateFormData, errors }: Step2Prop
 
             <div className="space-y-2">
               <Label htmlFor="apEmail" className="text-[#474748]">
-                Contact Email <span className="text-red-500">*</span>
+                {T.apEmailLabel} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="apEmail"
                 type="email"
                 value={formData.apEmail}
                 onChange={(e) => updateFormData({ apEmail: e.target.value })}
-                placeholder="ap@practice.com"
+                placeholder={T.apEmailPlaceholder}
                 className={errors.apEmail ? 'border-red-500' : ''}
               />
               {errors.apEmail && (

@@ -13,22 +13,25 @@ import {
 } from '@/components/ui/select'
 import type { ApplicationFormData } from '@/lib/form-types'
 import { US_STATES } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface Step3Props {
   formData: ApplicationFormData
   updateFormData: (data: Partial<ApplicationFormData>) => void
   errors: Record<string, string>
+  lang: Lang
 }
 
-export function Step3ShippingInfo({ formData, updateFormData, errors }: Step3Props) {
+export function Step3ShippingInfo({ formData, updateFormData, errors, lang }: Step3Props) {
+  const T = translations[lang].step3
   return (
     <Card className="premium-card border-0">
       <CardHeader className="pb-6">
         <CardTitle className="text-2xl font-semibold text-[#b40000]">
-          Shipping Information
+          {T.title}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Where should we ship your orders?
+          {T.subtitle}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -44,7 +47,7 @@ export function Step3ShippingInfo({ formData, updateFormData, errors }: Step3Pro
             htmlFor="shippingSameAsBilling"
             className="cursor-pointer font-normal text-[#474748]"
           >
-            Shipping address is the same as billing address
+            {T.sameAsBilling}
           </Label>
         </div>
 
@@ -52,13 +55,13 @@ export function Step3ShippingInfo({ formData, updateFormData, errors }: Step3Pro
           <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="space-y-2">
               <Label htmlFor="shippingAddress1" className="text-[#474748]">
-                Shipping Address <span className="text-red-500">*</span>
+                {T.shippingAddressLabel} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="shippingAddress1"
                 value={formData.shippingAddress1}
                 onChange={(e) => updateFormData({ shippingAddress1: e.target.value })}
-                placeholder="Street address"
+                placeholder={T.streetPlaceholder}
                 className={errors.shippingAddress1 ? 'border-red-500' : ''}
               />
               {errors.shippingAddress1 && (
@@ -68,26 +71,26 @@ export function Step3ShippingInfo({ formData, updateFormData, errors }: Step3Pro
 
             <div className="space-y-2">
               <Label htmlFor="shippingAddress2" className="text-[#474748]">
-                Address Line 2 <span className="text-muted-foreground">(optional)</span>
+                {T.address2Label} <span className="text-muted-foreground">(optional)</span>
               </Label>
               <Input
                 id="shippingAddress2"
                 value={formData.shippingAddress2}
                 onChange={(e) => updateFormData({ shippingAddress2: e.target.value })}
-                placeholder="Suite, unit, building, floor, etc."
+                placeholder={T.address2Placeholder}
               />
             </div>
 
             <div className="grid gap-6 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="shippingCity" className="text-[#474748]">
-                  City <span className="text-red-500">*</span>
+                  {T.cityLabel} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="shippingCity"
                   value={formData.shippingCity}
                   onChange={(e) => updateFormData({ shippingCity: e.target.value })}
-                  placeholder="City"
+                  placeholder={T.cityPlaceholder}
                   className={errors.shippingCity ? 'border-red-500' : ''}
                 />
                 {errors.shippingCity && (
@@ -97,14 +100,14 @@ export function Step3ShippingInfo({ formData, updateFormData, errors }: Step3Pro
 
               <div className="space-y-2">
                 <Label htmlFor="shippingState" className="text-[#474748]">
-                  State <span className="text-red-500">*</span>
+                  {T.stateLabel} <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.shippingState}
                   onValueChange={(value) => updateFormData({ shippingState: value })}
                 >
                   <SelectTrigger className={errors.shippingState ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select state" />
+                    <SelectValue placeholder={T.statePlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {US_STATES.map((state) => (
@@ -121,13 +124,13 @@ export function Step3ShippingInfo({ formData, updateFormData, errors }: Step3Pro
 
               <div className="space-y-2">
                 <Label htmlFor="shippingZip" className="text-[#474748]">
-                  ZIP Code <span className="text-red-500">*</span>
+                  {T.zipLabel} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="shippingZip"
                   value={formData.shippingZip}
                   onChange={(e) => updateFormData({ shippingZip: e.target.value })}
-                  placeholder="12345"
+                  placeholder={T.zipPlaceholder}
                   className={errors.shippingZip ? 'border-red-500' : ''}
                 />
                 {errors.shippingZip && (

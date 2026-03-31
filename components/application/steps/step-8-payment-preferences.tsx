@@ -6,69 +6,43 @@ import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CreditCard, Building2, Wallet, Banknote, Info, Calendar, Receipt } from 'lucide-react'
 import type { ApplicationFormData } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface Step8Props {
   formData: ApplicationFormData
   updateFormData: (data: Partial<ApplicationFormData>) => void
   errors: Record<string, string>
+  lang: Lang
 }
 
-const paymentOptions = [
-  {
-    value: 'check',
-    label: 'Check',
-    description: 'Pay invoices by mailing a check',
-    icon: Banknote,
-    notice: null,
-  },
-  {
-    value: 'ach',
-    label: 'ACH Transfer',
-    description: 'Pay directly from your bank account',
-    icon: Building2,
-    notice: null,
-  },
-  {
-    value: 'debit',
-    label: 'Debit Card on File',
-    description: 'Keep a debit card on file for automatic payments',
-    icon: Wallet,
-    notice: 'Debit card payments do not include a processing fee.',
-  },
-  {
-    value: 'credit',
-    label: 'Credit Card on File',
-    description: 'Keep a credit card on file for automatic payments',
-    icon: CreditCard,
-    notice: 'Credit card payments are subject to a 3% processing fee.',
-  },
-]
+const paymentIcons = [Banknote, Building2, Wallet, CreditCard]
 
-export function Step8PaymentPreferences({ formData, updateFormData, errors }: Step8Props) {
-  const selectedOption = paymentOptions.find((opt) => opt.value === formData.paymentMethod)
+export function Step8PaymentPreferences({ formData, updateFormData, errors, lang }: Step8Props) {
+  const T = translations[lang].step8
+  const selectedOption = T.paymentOptions.find((opt) => opt.value === formData.paymentMethod)
 
   return (
     <Card className="premium-card border-0">
       <CardHeader className="pb-6">
         <CardTitle className="text-2xl font-semibold text-[#b40000]">
-          Payment Preferences
+          {T.title}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          How would your practice typically prefer to pay invoices?
+          {T.subtitle}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <Label className="text-[#474748]">
-            Preferred Payment Method <span className="text-red-500">*</span>
+            {T.paymentMethodLabel} <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
             value={formData.paymentMethod}
             onValueChange={(value) => updateFormData({ paymentMethod: value })}
             className="grid gap-3 sm:grid-cols-2"
           >
-            {paymentOptions.map((option) => {
-              const Icon = option.icon
+            {T.paymentOptions.map((option, idx) => {
+              const Icon = paymentIcons[idx]
               return (
                 <div
                   key={option.value}
@@ -109,15 +83,15 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
         {(formData.paymentMethod === 'debit' || formData.paymentMethod === 'credit') && (
           <div className="space-y-4 rounded-lg border bg-gray-50 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div>
-              <p className="text-sm font-medium text-[#474748]">Card Information (Optional)</p>
+              <p className="text-sm font-medium text-[#474748]">{T.cardInfoTitle}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                You may provide your card information now, or our team can contact you later to collect it.
+                {T.cardInfoDesc}
               </p>
             </div>
-            
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="cardholderName" className="text-[#474748]">Name on Card</Label>
+                <Label htmlFor="cardholderName" className="text-[#474748]">{T.cardholderNameLabel}</Label>
                 <Input
                   id="cardholderName"
                   value={formData.cardholderName}
@@ -126,9 +100,9 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
                   className="mt-1"
                 />
               </div>
-              
+
               <div className="sm:col-span-2">
-                <Label htmlFor="cardNumber" className="text-[#474748]">Card Number</Label>
+                <Label htmlFor="cardNumber" className="text-[#474748]">{T.cardNumberLabel}</Label>
                 <Input
                   id="cardNumber"
                   value={formData.cardNumber}
@@ -137,9 +111,9 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
                   className="mt-1"
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="cardExpiration" className="text-[#474748]">Expiration Date</Label>
+                <Label htmlFor="cardExpiration" className="text-[#474748]">{T.expirationLabel}</Label>
                 <Input
                   id="cardExpiration"
                   value={formData.cardExpiration}
@@ -148,9 +122,9 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
                   className="mt-1"
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="cardCvv" className="text-[#474748]">CVV</Label>
+                <Label htmlFor="cardCvv" className="text-[#474748]">{T.cvvLabel}</Label>
                 <Input
                   id="cardCvv"
                   value={formData.cardCvv}
@@ -159,9 +133,9 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
                   className="mt-1"
                 />
               </div>
-              
+
               <div className="sm:col-span-2">
-                <Label htmlFor="cardBillingZip" className="text-[#474748]">Billing Zip Code</Label>
+                <Label htmlFor="cardBillingZip" className="text-[#474748]">{T.billingZipLabel}</Label>
                 <Input
                   id="cardBillingZip"
                   value={formData.cardBillingZip}
@@ -177,7 +151,7 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
         {/* Billing Frequency */}
         <div className="space-y-3">
           <Label className="text-[#474748]">
-            How would you like to be charged?
+            {T.billingFrequencyLabel}
           </Label>
           <RadioGroup
             value={formData.billingFrequency}
@@ -196,15 +170,15 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
                 <Label htmlFor="billing-per-shipment" className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Receipt className="h-4 w-4 text-[#474748]" />
-                    <span className="font-medium">Per Shipment</span>
+                    <span className="font-medium">{T.perShipmentLabel}</span>
                   </div>
                   <p className="mt-1 text-sm font-normal text-muted-foreground">
-                    Charged when each order ships
+                    {T.perShipmentDesc}
                   </p>
                 </Label>
               </div>
             </div>
-            
+
             <div
               className={`flex items-start space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50 ${
                 formData.billingFrequency === 'monthly'
@@ -217,11 +191,11 @@ export function Step8PaymentPreferences({ formData, updateFormData, errors }: St
                 <Label htmlFor="billing-monthly" className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-[#474748]" />
-                    <span className="font-medium">Monthly</span>
-                    <span className="text-xs text-muted-foreground">(only if approved)</span>
+                    <span className="font-medium">{T.monthlyLabel}</span>
+                    <span className="text-xs text-muted-foreground">{T.monthlyApproval}</span>
                   </div>
                   <p className="mt-1 text-sm font-normal text-muted-foreground">
-                    Consolidated monthly billing
+                    {T.monthlyDesc}
                   </p>
                 </Label>
               </div>

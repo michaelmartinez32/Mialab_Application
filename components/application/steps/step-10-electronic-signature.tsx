@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eraser, PenTool, Type } from 'lucide-react'
 import type { ApplicationFormData } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface Step10Props {
   formData: ApplicationFormData
@@ -15,20 +16,23 @@ interface Step10Props {
   errors: Record<string, string>
   signatureType: 'typed' | 'drawn'
   onSignatureTypeChange: (type: 'typed' | 'drawn') => void
+  lang: Lang
 }
 
-export function Step10ElectronicSignature({ 
-  formData, 
-  updateFormData, 
+export function Step10ElectronicSignature({
+  formData,
+  updateFormData,
   errors,
   signatureType,
-  onSignatureTypeChange
+  onSignatureTypeChange,
+  lang,
 }: Step10Props) {
+  const T = translations[lang].step10
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [signatureMode, setSignatureMode] = useState<'draw' | 'type'>(signatureType === 'typed' ? 'type' : 'draw')
   const [typedSignature, setTypedSignature] = useState('')
-  
+
   useEffect(() => {
     onSignatureTypeChange(signatureMode === 'type' ? 'typed' : 'drawn')
   }, [signatureMode, onSignatureTypeChange])
@@ -130,30 +134,30 @@ export function Step10ElectronicSignature({
     <Card className="premium-card border-0">
       <CardHeader className="pb-6">
         <CardTitle className="text-2xl font-semibold text-[#b40000]">
-          Electronic Signature
+          {T.title}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Sign below to certify that you are authorized to submit this application on behalf of the business.
+          {T.subtitle}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <Label className="text-[#474748]">
-            Signature <span className="text-red-500">*</span>
+            {T.signatureLabel} <span className="text-red-500">*</span>
           </Label>
-          
+
           <Tabs value={signatureMode} onValueChange={(v) => setSignatureMode(v as 'draw' | 'type')}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="draw" className="gap-2">
                 <PenTool className="h-4 w-4" />
-                Draw Signature
+                {T.drawTab}
               </TabsTrigger>
               <TabsTrigger value="type" className="gap-2">
                 <Type className="h-4 w-4" />
-                Type Signature
+                {T.typeTab}
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="draw" className="mt-4">
               <div className="space-y-3">
                 <div className="relative rounded-lg border-2 border-dashed border-gray-300 bg-white">
@@ -172,7 +176,7 @@ export function Step10ElectronicSignature({
                   />
                   <div className="absolute bottom-4 left-4 right-4 border-t border-gray-300" />
                   <span className="absolute bottom-2 left-4 text-xs text-muted-foreground">
-                    Sign above the line
+                    {T.signAboveLine}
                   </span>
                 </div>
                 <Button
@@ -183,11 +187,11 @@ export function Step10ElectronicSignature({
                   className="gap-2"
                 >
                   <Eraser className="h-4 w-4" />
-                  Clear Signature
+                  {T.clearSignature}
                 </Button>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="type" className="mt-4">
               <div className="space-y-3">
                 <div className="rounded-lg border-2 border-dashed border-gray-300 bg-white p-6">
@@ -195,7 +199,7 @@ export function Step10ElectronicSignature({
                     type="text"
                     value={typedSignature}
                     onChange={(e) => handleTypedSignatureChange(e.target.value)}
-                    placeholder="Type your full legal name"
+                    placeholder={T.typePlaceholder}
                     className="border-0 border-b-2 border-gray-300 bg-transparent text-center text-2xl italic focus-visible:ring-0 focus-visible:border-[#6fcbdb]"
                     style={{ fontFamily: 'cursive' }}
                   />
@@ -209,13 +213,13 @@ export function Step10ElectronicSignature({
                     className="gap-2"
                   >
                     <Eraser className="h-4 w-4" />
-                    Clear Signature
+                    {T.clearSignature}
                   </Button>
                 )}
               </div>
             </TabsContent>
           </Tabs>
-          
+
           {errors.signatureData && (
             <p className="text-sm text-red-500">{errors.signatureData}</p>
           )}
@@ -224,13 +228,13 @@ export function Step10ElectronicSignature({
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="printedName" className="text-[#474748]">
-              Printed Name <span className="text-red-500">*</span>
+              {T.printedNameLabel} <span className="text-red-500">*</span>
             </Label>
             <Input
               id="printedName"
               value={formData.printedName}
               onChange={(e) => updateFormData({ printedName: e.target.value })}
-              placeholder="Your full legal name"
+              placeholder={T.printedNamePlaceholder}
               className={errors.printedName ? 'border-red-500' : ''}
             />
             {errors.printedName && (
@@ -240,13 +244,13 @@ export function Step10ElectronicSignature({
 
           <div className="space-y-2">
             <Label htmlFor="title" className="text-[#474748]">
-              Title / Position <span className="text-red-500">*</span>
+              {T.titleLabel} <span className="text-red-500">*</span>
             </Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => updateFormData({ title: e.target.value })}
-              placeholder="e.g., Owner, Office Manager"
+              placeholder={T.titlePlaceholder}
               className={errors.title ? 'border-red-500' : ''}
             />
             {errors.title && (
@@ -256,7 +260,7 @@ export function Step10ElectronicSignature({
 
           <div className="space-y-2">
             <Label htmlFor="signatureDate" className="text-[#474748]">
-              Date
+              {T.dateLabel}
             </Label>
             <Input
               id="signatureDate"
@@ -269,7 +273,7 @@ export function Step10ElectronicSignature({
 
         <div className="rounded-lg border bg-gray-50 p-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            By signing above, you certify that you are authorized to submit this application on behalf of the business and that all information provided is true and accurate.
+            {T.certifyText}
           </p>
         </div>
       </CardContent>

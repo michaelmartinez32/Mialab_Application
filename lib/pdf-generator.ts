@@ -1,16 +1,21 @@
 import { jsPDF } from 'jspdf'
 import type { ApplicationFormData } from './form-types'
-import { agreementText, acknowledgmentLabels, AGREEMENT_VERSION } from './agreement-text'
+import { agreementText, agreementTextEs, acknowledgmentLabels, acknowledgmentLabelsEs, AGREEMENT_VERSION } from './agreement-text'
+import { translations, type Lang } from './translations'
 
 interface PDFGeneratorOptions {
   formData: ApplicationFormData
   applicationId: string
   signatureType: 'typed' | 'drawn'
   submittedAt: string
+  lang?: Lang
 }
 
 export async function generateApplicationPDF(options: PDFGeneratorOptions): Promise<Blob> {
-  const { formData, applicationId, signatureType, submittedAt } = options
+  const { formData, applicationId, signatureType, submittedAt, lang } = options
+  const T = translations[lang ?? 'en'].pdf
+  const activeAgreementText = (lang === 'es') ? agreementTextEs : agreementText
+  const activeAcknowledgmentLabels = (lang === 'es') ? acknowledgmentLabelsEs : acknowledgmentLabels
   const doc = new jsPDF()
 
   // ── PAGE GEOMETRY ───────────────────────────────────────────────────────────
@@ -157,19 +162,19 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   doc.setFontSize(13)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(25, 25, 25)
-  doc.text('Mialab Account Application', titleX, y + 4)
+  doc.text(T.title, titleX, y + 4)
 
   doc.setFontSize(7.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(115, 115, 115)
-  doc.text('Wholesale Optical Laboratory', titleX, y + 9.5)
+  doc.text(T.subtitle, titleX, y + 9.5)
 
   // Application ID + Submitted date — right-aligned
   doc.setFontSize(6.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(135, 135, 135)
-  doc.text(`Application ID: ${applicationId}`, PW - ML, y + 4, { align: 'right' })
-  doc.text(`Submitted: ${submittedAt}`, PW - ML, y + 9.5, { align: 'right' })
+  doc.text(`${T.applicationIdLabel}: ${applicationId}`, PW - ML, y + 4, { align: 'right' })
+  doc.text(`${T.submittedLabel}: ${submittedAt}`, PW - ML, y + 9.5, { align: 'right' })
 
   y += 16
 
@@ -180,53 +185,53 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   y += 4
 
   // ── PRACTICE / BUSINESS INFORMATION ─────────────────────────────────────────
-  sectionHeader('Practice / Business Information')
+  sectionHeader(T.sections.practiceInfo)
 
-  fullRow('Practice / Business Name', formData.practiceName)
-  if (formData.dbaName) fullRow('DBA / Trade Name', formData.dbaName)
-  dualRow('Doctor / Owner', formData.doctorOwnerName, 'Primary Contact', formData.primaryContactName)
-  dualRow('Email', formData.email, 'Phone', formData.phone)
-  if (formData.website) fullRow('Website', formData.website)
-  dualRow('Business Type', formData.businessType, 'Years in Business', formData.yearsInBusiness)
-  fullRow('Owner / Principal', formData.isOwnerPrincipal)
+  fullRow(T.fields.practiceName, formData.practiceName)
+  if (formData.dbaName) fullRow(T.fields.dbaName, formData.dbaName)
+  dualRow(T.fields.doctorOwner, formData.doctorOwnerName, T.fields.primaryContact, formData.primaryContactName)
+  dualRow(T.fields.email, formData.email, T.fields.phone, formData.phone)
+  if (formData.website) fullRow(T.fields.website, formData.website)
+  dualRow(T.fields.businessType, formData.businessType, T.fields.yearsInBusiness, formData.yearsInBusiness)
+  fullRow(T.fields.ownerPrincipal, formData.isOwnerPrincipal)
 
   // ── BILLING & A/P INFORMATION ────────────────────────────────────────────────
-  sectionHeader('Billing & A/P Information')
+  sectionHeader(T.sections.billing)
 
   const billingStreet = formData.billingAddress1 +
     (formData.billingAddress2 ? `  ${formData.billingAddress2}` : '')
-  fullRow('Billing Address', billingStreet)
-  fullRow('City, State, Zip', `${formData.billingCity}, ${formData.billingState}  ${formData.billingZip}`)
-  dualRow('A/P Contact', formData.apContactName, 'A/P Email', formData.apEmail)
+  fullRow(T.fields.billingAddress, billingStreet)
+  fullRow(T.fields.cityStateZip, `${formData.billingCity}, ${formData.billingState}  ${formData.billingZip}`)
+  dualRow(T.fields.apContact, formData.apContactName, T.fields.apEmail, formData.apEmail)
 
   // ── SHIPPING INFORMATION ─────────────────────────────────────────────────────
-  sectionHeader('Shipping Information')
+  sectionHeader(T.sections.shipping)
 
   if (formData.shippingSameAsBilling) {
-    fullRow('Shipping Address', 'Same as billing address')
+    fullRow(T.fields.shippingAddress, T.fields.sameAsBilling)
   } else {
     const shipStreet = (formData.shippingAddress1 || '') +
       (formData.shippingAddress2 ? `  ${formData.shippingAddress2}` : '')
     const shipCSZ = [formData.shippingCity, formData.shippingState, formData.shippingZip]
       .filter(Boolean).join(', ')
-    fullRow('Shipping Address', shipStreet || '—')
-    if (shipCSZ) fullRow('City, State, Zip', shipCSZ)
+    fullRow(T.fields.shippingAddress, shipStreet || '—')
+    if (shipCSZ) fullRow(T.fields.cityStateZip, shipCSZ)
   }
 
   // ── BUSINESS DETAILS ─────────────────────────────────────────────────────────
-  sectionHeader('Business Details')
+  sectionHeader(T.sections.businessDetails)
 
-  dualRow('Tax ID / EIN', formData.taxId, 'No. of Locations', formData.numberOfLocations)
-  dualRow('Monthly Lab Volume', formData.monthlyLabVolume, 'Weekly Eye Exams', formData.weeklyExams)
-  dualRow('In-House Edging', formData.edgeLensesInHouse, 'Lab Orders Managed By', formData.labOrdersManager)
+  dualRow(T.fields.taxId, formData.taxId, T.fields.numLocations, formData.numberOfLocations)
+  dualRow(T.fields.monthlyLabVolume, formData.monthlyLabVolume, T.fields.weeklyExams, formData.weeklyExams)
+  dualRow(T.fields.inHouseEdging, formData.edgeLensesInHouse, T.fields.labOrdersManagedBy, formData.labOrdersManager)
   if (formData.labOrdersContactName) {
-    dualRow('Lab Contact Name', formData.labOrdersContactName,
-      'Lab Contact Email', formData.labOrdersContactEmail || '')
+    dualRow(T.fields.labContactName, formData.labOrdersContactName,
+      T.fields.labContactEmail, formData.labOrdersContactEmail || '')
   }
-  dualRow('Plan to Begin Sending', formData.planToBeginSending, 'Reason for Account', formData.mainReason)
+  dualRow(T.fields.planToBegin, formData.planToBeginSending, T.fields.mainReason, formData.mainReason)
 
   // ── ORDERING, PAYMENT & FINANCIAL ────────────────────────────────────────────
-  sectionHeader('Ordering, Payment & Financial')
+  sectionHeader(T.sections.orderingPayment)
 
   const orderDisplay = (formData.orderingMethod === 'other' && formData.otherOrderingMethod)
     ? `Other: ${formData.otherOrderingMethod}`
@@ -238,23 +243,23 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     debit: 'Debit Card',
     credit: 'Credit Card (+3% fee)',
   }
-  dualRow('Ordering Method', orderDisplay,
-    'Payment Method', pmLabels[formData.paymentMethod] || formData.paymentMethod)
-  dualRow('Resale Certificate', formData.hasResaleCertificate,
-    'Apply for Credit', formData.applyForCredit)
+  dualRow(T.fields.orderingMethod, orderDisplay,
+    T.fields.paymentMethod, pmLabels[formData.paymentMethod] || formData.paymentMethod)
+  dualRow(T.fields.resaleCertificate, formData.hasResaleCertificate,
+    T.fields.applyForCredit, formData.applyForCredit)
   if (formData.applyForCredit === 'yes' && formData.requestedCreditAmount) {
-    fullRow('Requested Credit Limit', formData.requestedCreditAmount)
+    fullRow(T.fields.requestedCreditLimit, formData.requestedCreditAmount)
   }
 
   // ── ACCOUNT AND CREDIT AGREEMENT ─────────────────────────────────────────────
-  sectionHeader('Account and Credit Agreement')
+  sectionHeader(T.sections.agreement)
 
   doc.setFontSize(5.9)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(58, 58, 58)
 
   const AGR_LH = 2.75  // tighter line height for agreement text
-  const paragraphs = agreementText.split('\n\n').filter(p => p.trim())
+  const paragraphs = activeAgreementText.split('\n\n').filter(p => p.trim())
 
   for (const para of paragraphs) {
     const lines = doc.splitTextToSize(para.trim(), CW)
@@ -268,7 +273,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   y += 2
 
   // ── ACKNOWLEDGEMENTS ─────────────────────────────────────────────────────────
-  sectionHeader('Acknowledgements')
+  sectionHeader(T.sections.acknowledgements)
 
   const ackItems: Array<{ key: keyof typeof acknowledgmentLabels; checked: boolean }> = [
     { key: 'certifyTrueAccurate',      checked: formData.certifyTrueAccurate },
@@ -278,7 +283,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   ]
 
   for (const ack of ackItems) {
-    const label = acknowledgmentLabels[ack.key]
+    const label = activeAcknowledgmentLabels[ack.key]
     doc.setFontSize(7.5)
     const labelLines = doc.splitTextToSize(label, CW - 10)
     const h = Math.max(4.3, labelLines.length * 3.8)
@@ -305,12 +310,12 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   y += 2.5
 
   // ── ELECTRONIC SIGNATURE ─────────────────────────────────────────────────────
-  sectionHeader('Electronic Signature')
+  sectionHeader(T.sections.signature)
 
-  dualRow('Printed Name', formData.printedName, 'Title / Position', formData.title)
-  dualRow('Method',
-    signatureType === 'typed' ? 'Typed signature' : 'Drawn (handwritten)',
-    'Date Signed', formData.signatureDate)
+  dualRow(T.fields.printedName, formData.printedName, T.fields.titlePosition, formData.title)
+  dualRow(T.fields.method,
+    signatureType === 'typed' ? T.fields.typedSignature : T.fields.drawnSignature,
+    T.fields.dateSigned, formData.signatureDate)
 
   y += 1.5
 
@@ -326,7 +331,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   doc.setFontSize(6.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(205, 205, 205)
-  doc.text('Signature', ML + 3, y + 4.5)
+  doc.text(T.fields.signatureLabel, ML + 3, y + 4.5)
 
   if (signatureType === 'drawn' && formData.signatureData) {
     try {
@@ -369,10 +374,10 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(135, 135, 135)
   doc.text(
-    `Electronically signed by ${formData.printedName}` +
+    `${T.electronicallySigned} ${formData.printedName}` +
     (formData.title ? `, ${formData.title}` : '') +
     ` on ${formData.signatureDate}. ` +
-    `This electronic record constitutes a legally binding signature.`,
+    T.legalNote,
     ML, y, { maxWidth: CW }
   )
 
@@ -384,7 +389,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(175, 175, 175)
     doc.text(
-      `Application ID: ${applicationId}  ·  Page ${i} of ${totalPages}`,
+      T.footer(applicationId, i, totalPages),
       PW / 2, PH - 5, { align: 'center' }
     )
   }

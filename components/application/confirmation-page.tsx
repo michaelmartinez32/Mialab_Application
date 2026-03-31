@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  CheckCircle2, 
-  FileSearch, 
-  UserCog, 
-  Mail, 
-  CreditCard, 
+import {
+  CheckCircle2,
+  FileSearch,
+  UserCog,
+  Mail,
+  CreditCard,
   Send,
   Phone,
   AtSign,
@@ -14,47 +14,19 @@ import {
   Check
 } from 'lucide-react'
 import { useState } from 'react'
+import { translations, type Lang } from '@/lib/translations'
 
 interface ConfirmationPageProps {
   applicationId: string
   submittedAt: string
   email: string
+  lang: Lang
 }
 
-const steps = [
-  {
-    number: 1,
-    title: 'Application Review',
-    description: 'Our team reviews your application and credit request.',
-    icon: FileSearch,
-  },
-  {
-    number: 2,
-    title: 'Account Setup',
-    description: 'Once approved, we will create your Mialab account.',
-    icon: UserCog,
-  },
-  {
-    number: 3,
-    title: 'Login Credentials Sent',
-    description: 'You will receive an email containing your account number, username, and login instructions so your practice can begin placing orders.',
-    icon: Mail,
-  },
-  {
-    number: 4,
-    title: 'Payment Setup',
-    description: 'If you selected a card on file option, you will receive a secure payment link.',
-    icon: CreditCard,
-  },
-  {
-    number: 5,
-    title: 'Start Sending Jobs',
-    description: 'Once your credentials are received, you can begin submitting orders to Mialab.',
-    icon: Send,
-  },
-]
+const stepIcons = [FileSearch, UserCog, Mail, CreditCard, Send]
 
-export function ConfirmationPage({ applicationId, submittedAt, email }: ConfirmationPageProps) {
+export function ConfirmationPage({ applicationId, submittedAt, email, lang }: ConfirmationPageProps) {
+  const T = translations[lang].confirmation
   const [copied, setCopied] = useState(false)
 
   const copyApplicationId = async () => {
@@ -78,10 +50,10 @@ export function ConfirmationPage({ applicationId, submittedAt, email }: Confirma
           <CheckCircle2 className="h-10 w-10 text-green-600" />
         </div>
         <h1 className="text-3xl font-bold text-[#474748]">
-          Thank You for Applying with Mialab
+          {T.heading}
         </h1>
         <p className="mt-3 text-lg text-muted-foreground">
-          Your account application has been successfully submitted.
+          {T.subheading}
         </p>
       </div>
 
@@ -90,14 +62,14 @@ export function ConfirmationPage({ applicationId, submittedAt, email }: Confirma
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold text-[#b40000]">
             <FileText className="h-5 w-5" />
-            Application Details
+            {T.detailsTitle}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-lg bg-gray-50 p-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Application ID</p>
+                <p className="text-sm font-medium text-muted-foreground">{T.applicationIdLabel}</p>
                 <div className="mt-1 flex items-center gap-2">
                   <code className="rounded bg-white px-2 py-1 font-mono text-sm text-[#474748]">
                     {applicationId.slice(0, 8)}...
@@ -117,28 +89,25 @@ export function ConfirmationPage({ applicationId, submittedAt, email }: Confirma
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Submitted</p>
+                <p className="text-sm font-medium text-muted-foreground">{T.submittedLabel}</p>
                 <p className="mt-1 text-sm text-[#474748]">{formattedDate}</p>
               </div>
               <div className="sm:col-span-2">
-                <p className="text-sm font-medium text-muted-foreground">Confirmation Email</p>
+                <p className="text-sm font-medium text-muted-foreground">{T.confirmationEmailLabel}</p>
                 <p className="mt-1 text-sm text-[#474748]">
-                  A confirmation email has been sent to <strong>{email}</strong>
+                  {T.confirmationEmailSentTo} <strong>{email}</strong>
                 </p>
               </div>
             </div>
           </div>
           <div className="rounded-lg border border-green-200 bg-green-50 p-4">
             <p className="text-sm text-green-800">
-              <strong>A copy of your completed application has been emailed to you for your records.</strong> Our team will review your application and respond within 24 business hours.
+              <strong>{T.copyEmailedBody}</strong> {T.reviewTime}
             </p>
           </div>
           <div className="rounded-lg border border-[#6fcbdb]/30 bg-[#6fcbdb]/5 p-4">
             <p className="text-sm text-[#474748]">
-              <strong>Important:</strong> Please save your Application ID for your records. 
-              Your signed application PDF and all submitted documents have been securely stored 
-              and cannot be modified. If you need to make changes, you will need to submit a 
-              new amendment request.
+              <strong>{T.importantLabel}</strong> {T.importantText}
             </p>
           </div>
         </CardContent>
@@ -147,26 +116,26 @@ export function ConfirmationPage({ applicationId, submittedAt, email }: Confirma
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-[#b40000]">
-            What Happens Next
+            {T.whatNextTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {steps.map((step, index) => {
-              const Icon = step.icon
+            {T.nextSteps.map((step, index) => {
+              const Icon = stepIcons[index]
               return (
-                <div key={step.number} className="flex gap-4">
+                <div key={index} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#6fcbdb]/20 text-[#474748]">
                       <Icon className="h-5 w-5" />
                     </div>
-                    {index < steps.length - 1 && (
+                    {index < T.nextSteps.length - 1 && (
                       <div className="mt-2 h-full w-px bg-gray-200" />
                     )}
                   </div>
                   <div className="pb-6">
                     <h3 className="font-medium text-[#474748]">
-                      {step.number}. {step.title}
+                      {index + 1}. {step.title}
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {step.description}
@@ -182,12 +151,12 @@ export function ConfirmationPage({ applicationId, submittedAt, email }: Confirma
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-[#474748]">
-            Need Assistance?
+            {T.assistanceTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            Our team is here to help if you have any questions about your application or need support.
+            {T.assistanceDesc}
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" className="gap-2" asChild>
@@ -211,7 +180,7 @@ export function ConfirmationPage({ applicationId, submittedAt, email }: Confirma
           asChild
           className="bg-[#b40000] text-white hover:bg-[#8f0000]"
         >
-          <a href="/">Return to Home</a>
+          <a href="/">{T.returnHome}</a>
         </Button>
       </div>
     </div>

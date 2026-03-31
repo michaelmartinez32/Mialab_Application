@@ -1,7 +1,9 @@
 import type { ApplicationFormData } from './form-types'
+import type { Lang } from './translations'
 
 interface CustomerEmailParams {
   primaryContactName: string
+  lang?: Lang
 }
 
 interface InternalEmailParams {
@@ -12,7 +14,8 @@ interface InternalEmailParams {
   resaleCertificateUploaded: boolean
 }
 
-export function generateCustomerConfirmationEmail({ primaryContactName }: CustomerEmailParams): string {
+export function generateCustomerConfirmationEmail({ primaryContactName, lang = 'en' }: CustomerEmailParams): string {
+  const isEs = lang === 'es'
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -33,37 +36,36 @@ export function generateCustomerConfirmationEmail({ primaryContactName }: Custom
               <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">Wholesale Optical Laboratory</p>
             </td>
           </tr>
-          
+
           <!-- Content -->
           <tr>
             <td style="padding: 40px;">
               <p style="margin: 0 0 20px; color: #474748; font-size: 16px; line-height: 1.6;">
-                Hello ${primaryContactName},
+                ${isEs ? `Hola ${primaryContactName},` : `Hello ${primaryContactName},`}
               </p>
-              
+
               <p style="margin: 0 0 20px; color: #474748; font-size: 16px; line-height: 1.6;">
-                Thank you for submitting your account application with Mialab.
+                ${isEs ? 'Gracias por enviar su solicitud de cuenta con Mialab.' : 'Thank you for submitting your account application with Mialab.'}
               </p>
-              
+
               <p style="margin: 0 0 20px; color: #474748; font-size: 16px; line-height: 1.6;">
-                We have successfully received your application and it is currently under review. Our team will review the information provided and follow up with you within <strong>24 business hours</strong> regarding the status of your account.
+                ${isEs ? 'Hemos recibido su solicitud correctamente y actualmente está en revisión. Nuestro equipo revisará la información proporcionada y se comunicará con usted dentro de las <strong>24 horas hábiles</strong> siguientes para informarle sobre el estado de su cuenta.' : 'We have successfully received your application and it is currently under review. Our team will review the information provided and follow up with you within <strong>24 business hours</strong> regarding the status of your account.'}
               </p>
-              
+
               <p style="margin: 0 0 20px; color: #474748; font-size: 16px; line-height: 1.6;">
-                For your records, a copy of your completed application is attached to this email.
+                ${isEs ? 'Para sus registros, una copia de su solicitud completada está adjunta a este correo electrónico.' : 'For your records, a copy of your completed application is attached to this email.'}
               </p>
-              
+
               <p style="margin: 0 0 30px; color: #474748; font-size: 16px; line-height: 1.6;">
-                If you have any questions in the meantime, please feel free to contact us at <a href="tel:+13053647100" style="color: #b40000; text-decoration: none; font-weight: bold;">305-364-7100</a>.
+                ${isEs ? 'Si tiene alguna pregunta mientras tanto, no dude en comunicarse con nosotros al <a href="tel:+13053647100" style="color: #b40000; text-decoration: none; font-weight: bold;">305-364-7100</a>.' : 'If you have any questions in the meantime, please feel free to contact us at <a href="tel:+13053647100" style="color: #b40000; text-decoration: none; font-weight: bold;">305-364-7100</a>.'}
               </p>
-              
+
               <p style="margin: 0 0 8px; color: #474748; font-size: 16px; line-height: 1.6;">
-                Thank you for your interest in working with Mialab.
+                ${isEs ? 'Gracias por su interés en trabajar con Mialab.' : 'Thank you for your interest in working with Mialab.'}
               </p>
-              
+
               <p style="margin: 0; color: #474748; font-size: 16px; line-height: 1.6;">
-                Best regards,<br>
-                <strong>Mialab Team</strong>
+                ${isEs ? 'Atentamente,<br><strong>Equipo de Mialab</strong>' : 'Best regards,<br><strong>Mialab Team</strong>'}
               </p>
             </td>
           </tr>
@@ -239,5 +241,6 @@ export function generateInternalNotificationEmail({
 
 export const EMAIL_SUBJECTS = {
   customerConfirmation: 'Your Mialab Account Application Has Been Received',
+  customerConfirmationEs: 'Su Solicitud de Cuenta con Mialab Ha Sido Recibida',
   internalNotification: 'New Mialab Account Application Submitted',
 }

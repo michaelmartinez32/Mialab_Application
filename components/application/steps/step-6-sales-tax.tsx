@@ -7,14 +7,17 @@ import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Upload, FileText, X, AlertCircle } from 'lucide-react'
 import type { ApplicationFormData } from '@/lib/form-types'
+import { translations, type Lang } from '@/lib/translations'
 
 interface Step6Props {
   formData: ApplicationFormData
   updateFormData: (data: Partial<ApplicationFormData>) => void
   errors: Record<string, string>
+  lang: Lang
 }
 
-export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) {
+export function Step6SalesTax({ formData, updateFormData, errors, lang }: Step6Props) {
+  const T = translations[lang].step6
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,19 +44,19 @@ export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) 
     <Card className="premium-card border-0">
       <CardHeader className="pb-6">
         <CardTitle className="text-2xl font-semibold text-[#b40000]">
-          Sales Tax Information (if applicable)
+          {T.title}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Sales tax documentation is only required in certain states such as Alabama, New Mexico, Utah, and California. Florida and most other states do not require this for prescription eyewear.
+          {T.subtitle1}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          If this does not apply to your business, you may leave this section blank and our team will follow up if needed.
+          {T.subtitle2}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <Label className="text-[#474748]">
-            Do you have a resale certificate? <span className="text-red-500">*</span>
+            {T.resaleCertLabel} <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
             value={formData.hasResaleCertificate}
@@ -63,18 +66,18 @@ export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) 
             <div className="flex items-center space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50">
               <RadioGroupItem value="yes" id="resale-yes" />
               <Label htmlFor="resale-yes" className="cursor-pointer font-normal">
-                <span className="font-medium">Yes</span>
+                <span className="font-medium">{T.resaleYesLabel}</span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  I have a valid resale certificate to upload
+                  {T.resaleYesDesc}
                 </p>
               </Label>
             </div>
             <div className="flex items-center space-x-3 rounded-lg border p-4 transition-colors hover:bg-gray-50">
               <RadioGroupItem value="no" id="resale-no" />
               <Label htmlFor="resale-no" className="cursor-pointer font-normal">
-                <span className="font-medium">No</span>
+                <span className="font-medium">{T.resaleNoLabel}</span>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  I do not have a resale certificate at this time
+                  {T.resaleNoDesc}
                 </p>
               </Label>
             </div>
@@ -87,9 +90,9 @@ export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) 
         {formData.hasResaleCertificate === 'yes' && (
           <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <Label className="text-[#474748]">
-              Upload Resale Certificate <span className="text-red-500">*</span>
+              {T.uploadLabel} <span className="text-red-500">*</span>
             </Label>
-            
+
             {!formData.resaleCertificateFileName ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -104,10 +107,10 @@ export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) 
                 />
                 <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
                 <p className="mt-3 text-sm font-medium text-[#474748]">
-                  Click to upload or drag and drop
+                  {T.uploadClick}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  PDF, JPG, or PNG (max 10MB)
+                  {T.uploadTypes}
                 </p>
               </div>
             ) : (
@@ -120,7 +123,7 @@ export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) 
                     <p className="text-sm font-medium text-[#474748]">
                       {formData.resaleCertificateFileName}
                     </p>
-                    <p className="text-xs text-muted-foreground">Ready to upload</p>
+                    <p className="text-xs text-muted-foreground">{T.uploadReady}</p>
                   </div>
                 </div>
                 <Button
@@ -144,9 +147,9 @@ export function Step6SalesTax({ formData, updateFormData, errors }: Step6Props) 
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
             <div>
-              <p className="text-sm font-medium text-amber-800">Sales Tax May Apply</p>
+              <p className="text-sm font-medium text-amber-800">{T.taxWarningTitle}</p>
               <p className="mt-1 text-sm text-amber-700">
-                Sales tax may apply to applicable orders unless a valid resale certificate is provided. You can upload a certificate later through your account settings.
+                {T.taxWarningDesc}
               </p>
             </div>
           </div>
