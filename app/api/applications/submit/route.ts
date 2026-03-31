@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
     //    does NOT prevent emails from sending.
     let pdfBlobPathname: string | null = null
     let pdfAttachment: { content: string; filename: string; type: string } | null = null
+    let customerPdfAttachment: { content: string; filename: string; type: string } | null = null
 
     try {
       console.log(`[submit:${applicationId}] Generating PDF...`)
@@ -171,6 +172,11 @@ export async function POST(request: NextRequest) {
         pdfAttachment = {
           content: pdfBase64,
           filename: `mialab-application-${applicationId.slice(0, 8)}.pdf`,
+          type: 'application/pdf',
+        }
+        customerPdfAttachment = {
+          content: pdfBase64,
+          filename: 'Mialab-Application.pdf',
           type: 'application/pdf',
         }
         console.log(`[submit:${applicationId}] PDF attachment prepared (${pdfSizeKB}KB — within threshold)`)
@@ -271,20 +277,23 @@ export async function POST(request: NextRequest) {
     console.log(`[submit:${applicationId}] MAIL_FROM: ${process.env.MAIL_FROM || 'cs@mialab.com (default)'}`)
     console.log(`[submit:${applicationId}] MAIL_TO_INTERNAL: ${process.env.MAIL_TO_INTERNAL || 'michael@mialab.com (default)'}`)
 
-    // PDF is attached to internal email only — customer email is lightweight (no attachment)
     const internalAttachments = pdfAttachment ? [pdfAttachment] : undefined
+    const customerAttachments = customerPdfAttachment ? [customerPdfAttachment] : undefined
 
-    // 11a. Customer confirmation — no attachment
+    // 11a. Customer confirmation — PDF attached
     const customerEmailHtml = generateCustomerConfirmationEmail({
       primaryContactName: formData.primaryContactName,
     })
 
-    console.log(`[submit:${applicationId}] Sending customer email to: ${formData.email}`)
+    console.log(`[submit:${applicationId}] Sending customer email to: ${formData.email} (attachment: ${customerAttachments ? 'Mialab-Application.pdf' : 'none — PDF generation failed'})`)
+    if (!customerAttachments) {
+      console.error(`[submit:${applicationId}] WARNING: customer email sending without PDF attachment because PDF generation failed`)
+    }
     const customerEmailResult = await sendEmail(
       formData.email,
       EMAIL_SUBJECTS.customerConfirmation,
       customerEmailHtml,
-      undefined  // no attachment — keeps customer email lightweight
+      customerAttachments
     )
     console.log(`[submit:${applicationId}] Customer email result: success=${customerEmailResult.success} messageId=${customerEmailResult.messageId} error=${customerEmailResult.error ?? 'none'}`)
 
