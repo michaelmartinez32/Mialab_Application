@@ -6,11 +6,10 @@ export function ApplicationHeader() {
       <div className="mx-auto flex h-20 max-w-4xl items-center justify-between px-6">
         <div className="flex items-center py-2 pl-1">
           <Image
-            src="/mialab-logo-pdf.png"
+            src="/mialab-logo.png"
             alt="Mialab"
-            width={480}
-            height={258}
-            className="h-14 w-auto"
+            width={140}
+            height={75}
             priority
           />
         </div>

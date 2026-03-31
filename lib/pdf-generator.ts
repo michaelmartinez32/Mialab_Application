@@ -111,8 +111,8 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   }
 
   // ── HEADER: LOGO + TITLE + META ─────────────────────────────────────────────
-  // Asset: public/mialab-logo-pdf.png — 480×258px, 49KB, git-tracked, same file
-  // used by the site header. Multi-candidate path approach from Quick Send.
+  // Asset: public/mialab-logo.png — 480×258px, 49KB (same file as Quick Send).
+  // Loaded via fs + sharp, embedded as base64 PNG — same approach as Quick Send.
   const LOGO_H = 12   // mm — small, balanced
   const LOGO_W_MAX = 45
   let LOGO_W = 22     // default at 480:258 aspect; overwritten from actual metadata
@@ -127,9 +127,9 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     const sharp = require('sharp')
 
     const candidates = [
-      path.join(process.cwd(), 'public', 'mialab-logo-pdf.png'),
-      path.join(__dirname, '..', '..', 'public', 'mialab-logo-pdf.png'),
-      path.join(__dirname, '..', 'public', 'mialab-logo-pdf.png'),
+      path.join(process.cwd(), 'public', 'mialab-logo.png'),
+      path.join(__dirname, '..', '..', 'public', 'mialab-logo.png'),
+      path.join(__dirname, '..', 'public', 'mialab-logo.png'),
     ]
     let buf: Buffer | null = null
     for (const p of candidates) {
