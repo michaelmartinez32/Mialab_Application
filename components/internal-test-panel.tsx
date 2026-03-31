@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-// ── Secret shortcut: Shift+T pressed 3 times within 1.5 seconds ──────────────
+// ── Shortcuts ─────────────────────────────────────────────────────────────────
+// 1. Ctrl+Shift+9 — instant toggle
+// 2. Shift+T pressed 3 times within 1.5 seconds
+// 3. URL param ?showTestPanel=1 — auto-opens on load
 const SHORTCUT_KEY = 'T'
 const SHORTCUT_COUNT = 3
 const SHORTCUT_WINDOW_MS = 1500
@@ -17,10 +20,27 @@ export function InternalTestPanel() {
   const [errorMsg, setErrorMsg] = useState('')
   const keyTimestamps = useRef<number[]>([])
 
-  // Keyboard shortcut detection
+  const open = () => { setVisible(true); setPdfStatus('idle'); setEmailStatus('idle'); setErrorMsg('') }
+  const toggle = () => { setVisible(v => { if (!v) { setPdfStatus('idle'); setEmailStatus('idle'); setErrorMsg('') } return !v }) }
+
+  // URL param trigger: ?showTestPanel=1
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('showTestPanel') === '1') {
+      open()
+    }
+  }, [])
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore when typing in inputs/textareas
+      // Ctrl+Shift+9 — instant toggle, works anywhere
+      if (e.ctrlKey && e.shiftKey && e.key === '9') {
+        e.preventDefault()
+        toggle()
+        return
+      }
+
+      // Shift+T x3 — ignore when typing in inputs
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
@@ -32,11 +52,7 @@ export function InternalTestPanel() {
         ]
         if (keyTimestamps.current.length >= SHORTCUT_COUNT) {
           keyTimestamps.current = []
-          setVisible(v => !v)
-          // Reset statuses when toggling open
-          setPdfStatus('idle')
-          setEmailStatus('idle')
-          setErrorMsg('')
+          toggle()
         }
       }
     }
@@ -164,7 +180,7 @@ export function InternalTestPanel() {
 
       {/* Footer hint */}
       <div style={{ marginTop: '12px', color: '#444', fontSize: '10px', borderTop: '1px solid #2a2a2a', paddingTop: '8px' }}>
-        Shift+T × 3 to toggle · not visible to clients
+        Ctrl+Shift+9 · Shift+T×3 · ?showTestPanel=1
       </div>
     </div>
   )
