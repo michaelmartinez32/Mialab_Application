@@ -41,14 +41,6 @@ export default function RootLayout({
         {children}
         <Analytics />
         <InternalTestPanel />
-        {/* TEMPORARY build verification stamp — remove once deployment is confirmed */}
-        <div style={{
-          position: 'fixed', bottom: '8px', right: '10px', zIndex: 9998,
-          fontSize: '10px', color: '#aaa', pointerEvents: 'none', userSelect: 'none',
-          fontFamily: 'monospace', letterSpacing: '0.03em',
-        }}>
-          BUILD TEST 1
-        </div>
       </body>
     </html>
   )

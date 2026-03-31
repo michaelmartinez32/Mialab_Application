@@ -22,9 +22,10 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   const HALF = (CW - GAP) / 2  // ~93mm per column
   const RC = ML + HALF + GAP   // right column x
 
-  // Label widths (label sits left of value within each column)
-  const LW_FULL = 44   // for full-width rows
-  const LW_HALF = 33   // for dual-column rows
+  // Unified label width — applies to both full-width and dual-column rows.
+  // All value columns start at ML + LW (left) or RC + LW (right), forming two
+  // consistent vertical value rails across the entire document.
+  const LW = 36
 
   // Vertical rhythm
   const RH = 4.5          // standard row height (mm)
@@ -87,14 +88,14 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   // Two label+value pairs on one row
   const dualRow = (lLabel: string, lValue: string, rLabel: string, rValue: string) => {
     doc.setFontSize(7.5)
-    const vW = HALF - LW_HALF - 1
+    const vW = HALF - LW - 1
     const lWrap = doc.splitTextToSize(lValue || '—', vW).length > 1
     const rWrap = doc.splitTextToSize(rValue || '—', vW).length > 1
     const extra = (lWrap || rWrap) ? 1 : 0
     const h = RH + extra * 3.2
     ensureSpace(h)
-    renderPair(lLabel, lValue, ML, LW_HALF, vW, y)
-    renderPair(rLabel, rValue, RC, LW_HALF, vW, y)
+    renderPair(lLabel, lValue, ML, LW, vW, y)
+    renderPair(rLabel, rValue, RC, LW, vW, y)
     y += h
   }
 
@@ -102,11 +103,11 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   const fullRow = (label: string, value: string) => {
     const v = value || '—'
     doc.setFontSize(7.5)
-    const vW = CW - LW_FULL - 1
+    const vW = CW - LW - 1
     const lines = doc.splitTextToSize(v, vW)
     const h = Math.max(RH, lines.length * 3.5)
     ensureSpace(h)
-    renderPair(label, v, ML, LW_FULL, vW, y)
+    renderPair(label, v, ML, LW, vW, y)
     y += h
   }
 
