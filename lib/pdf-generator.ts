@@ -110,18 +110,60 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     y += h
   }
 
-  // ── HEADER: TITLE + META ────────────────────────────────────────────────────
+  // ── HEADER: LOGO + TITLE + META ─────────────────────────────────────────────
+  // Asset: public/mialab-logo-pdf.png — 480×258px, 49KB, git-tracked, same file
+  // used by the site header. Multi-candidate path approach from Quick Send.
+  const LOGO_H = 12   // mm — small, balanced
+  const LOGO_W_MAX = 45
+  let LOGO_W = 22     // default at 480:258 aspect; overwritten from actual metadata
+
+  let logoBase64: string | null = null
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs') as typeof import('fs')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path') as typeof import('path')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const sharp = require('sharp')
+
+    const candidates = [
+      path.join(process.cwd(), 'public', 'mialab-logo-pdf.png'),
+      path.join(__dirname, '..', '..', 'public', 'mialab-logo-pdf.png'),
+      path.join(__dirname, '..', 'public', 'mialab-logo-pdf.png'),
+    ]
+    let buf: Buffer | null = null
+    for (const p of candidates) {
+      if (fs.existsSync(p)) { buf = fs.readFileSync(p); break }
+    }
+    if (buf) {
+      const meta = await sharp(buf).metadata()
+      if (meta.width && meta.height) {
+        LOGO_W = Math.min(+(( meta.width / meta.height) * LOGO_H).toFixed(1), LOGO_W_MAX)
+      }
+      const resized: Buffer = await sharp(buf)
+        .resize(Math.round(LOGO_W * (96 / 25.4)), Math.round(LOGO_H * (96 / 25.4)), { fit: 'inside', withoutEnlargement: true })
+        .png()
+        .toBuffer()
+      logoBase64 = `data:image/png;base64,${resized.toString('base64')}`
+    }
+  } catch { /* silent — fall through to text-only header */ }
+
+  if (logoBase64) {
+    doc.addImage(logoBase64, 'PNG', ML, y, LOGO_W, LOGO_H)
+  }
+
+  const titleX = logoBase64 ? ML + LOGO_W + 3 : ML
   doc.setFontSize(13)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(25, 25, 25)
-  doc.text('Mialab Account Application', ML, y + 4)
+  doc.text('Mialab Account Application', titleX, y + 4)
 
   doc.setFontSize(7.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(115, 115, 115)
-  doc.text('Wholesale Optical Laboratory', ML, y + 9.5)
+  doc.text('Wholesale Optical Laboratory', titleX, y + 9.5)
 
-  // Application ID + Submitted date — right-aligned, vertically matched
+  // Application ID + Submitted date — right-aligned
   doc.setFontSize(6.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(135, 135, 135)
