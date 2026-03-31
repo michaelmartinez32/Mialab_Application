@@ -18,6 +18,22 @@ const PHASE_INTERNAL_STEPS: Record<number, number[]> = {
   3: [7, 8, 9, 10], // Credit, Payment, Terms, Signature
 }
 
+// Maps internal step number → traversal position (1–10 in actual flow order).
+// Without this, the progress bar goes backwards when phase 1 (steps 1,4,5) hands
+// off to phase 2 (steps 2,3,6) because step 2 < step 5 numerically.
+const STEP_TO_ORDERED_POSITION: Record<number, number> = {
+  1: 1,
+  4: 2,
+  5: 3,
+  2: 4,
+  3: 5,
+  6: 6,
+  7: 7,
+  8: 8,
+  9: 9,
+  10: 10,
+}
+
 // Get which parent phase the internal step belongs to
 function getParentPhase(internalStep: number): number {
   if (internalStep === 1 || internalStep === 4 || internalStep === 5) return 1
@@ -27,14 +43,8 @@ function getParentPhase(internalStep: number): number {
 
 // Check if a parent phase is complete
 function isPhaseComplete(phase: number, currentInternalStep: number): boolean {
-  const stepsInPhase = PHASE_INTERNAL_STEPS[phase]
-  const maxStep = Math.max(...stepsInPhase)
-  // Phase is complete when we've moved past all its steps
-  // But we need to account for non-sequential ordering
   const currentPhase = getParentPhase(currentInternalStep)
-  if (phase < currentPhase) return true
-  if (phase === currentPhase) return false
-  return false
+  return phase < currentPhase
 }
 
 // Check if currently on a phase
@@ -42,11 +52,36 @@ function isOnPhase(phase: number, currentInternalStep: number): boolean {
   return getParentPhase(currentInternalStep) === phase
 }
 
+// Desktop stepper line: gradual progress within each phase segment.
+// Segment 1 spans 0%–50% (between circle 1 and circle 2).
+// Segment 2 spans 50%–100% (between circle 2 and circle 3).
+// Phase 3 has no next circle so clamps to 100%.
+function getStepperLinePercent(currentStep: number, currentPhase: number): number {
+  const stepsInPhase = PHASE_INTERNAL_STEPS[currentPhase]
+  const indexInPhase = stepsInPhase.indexOf(currentStep) // 0-based
+  const stepsCount = stepsInPhase.length
+
+  if (currentPhase === 1) {
+    // Segment fills from 0% toward 50% as sub-steps advance
+    return (indexInPhase / stepsCount) * 50
+  }
+  if (currentPhase === 2) {
+    // Segment fills from 50% toward 100% as sub-steps advance
+    return 50 + (indexInPhase / stepsCount) * 50
+  }
+  // Phase 3 — all prior segments are complete
+  return 100
+}
+
 export function SectionProgress({ currentStep, totalSteps }: SectionProgressProps) {
   const currentPhase = getParentPhase(currentStep)
 
-  // Calculate gradual progress based on 10 internal steps
-  const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100
+  // Ordered position ensures the bar always moves forward (never backwards)
+  const orderedPosition = STEP_TO_ORDERED_POSITION[currentStep] ?? currentStep
+  const progressPercent = ((orderedPosition - 1) / (totalSteps - 1)) * 100
+
+  // Desktop stepper line — gradual within phase, never resets
+  const stepperLinePercent = getStepperLinePercent(currentStep, currentPhase)
 
   return (
     <div className="w-full space-y-4">
@@ -57,10 +92,10 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
         </h2>
       </div>
 
-      {/* Overall progress bar (gradual, based on 10 steps) */}
+      {/* Overall progress bar — always moves forward */}
       <div className="mx-auto max-w-md">
         <div className="h-2 w-full rounded-full bg-gray-200">
-          <div 
+          <div
             className="h-2 rounded-full bg-[#6fcbdb] transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
@@ -75,13 +110,13 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
         <div className="relative pt-2">
           {/* Progress line background */}
           <div className="absolute left-0 right-0 top-6 h-0.5 bg-gray-200" />
-          
-          {/* Progress line filled - based on phase completion */}
-          <div 
+
+          {/* Progress line filled — gradual, never resets */}
+          <div
             className="absolute left-0 top-6 h-0.5 bg-green-500 transition-all duration-500"
-            style={{ width: `${currentPhase === 1 ? 0 : currentPhase === 2 ? 50 : 100}%` }}
+            style={{ width: `${stepperLinePercent}%` }}
           />
-          
+
           {/* Steps */}
           <div className="relative flex justify-between">
             {VISIBLE_STEP_TITLES.map((title, index) => {
@@ -89,7 +124,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
               const isCompleted = isPhaseComplete(phaseNumber, currentStep)
               const isCurrent = isOnPhase(phaseNumber, currentStep)
               const isFuture = !isCompleted && !isCurrent
-              
+
               return (
                 <div key={phaseNumber} className="flex flex-col items-center" style={{ width: `${100 / VISIBLE_TOTAL_STEPS}%` }}>
                   {/* Phase circle */}
@@ -107,7 +142,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
                       phaseNumber
                     )}
                   </div>
-                  
+
                   {/* Phase title */}
                   <span
                     className={cn(
@@ -134,7 +169,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
             const phaseNumber = index + 1
             const isCompleted = isPhaseComplete(phaseNumber, currentStep)
             const isCurrent = isOnPhase(phaseNumber, currentStep)
-            
+
             return (
               <div key={phaseNumber} className="flex items-center">
                 <div
@@ -171,7 +206,7 @@ export function SectionProgress({ currentStep, totalSteps }: SectionProgressProp
           const phaseNumber = index + 1
           const isCompleted = isPhaseComplete(phaseNumber, currentStep)
           const isCurrent = isOnPhase(phaseNumber, currentStep)
-          
+
           return (
             <div
               key={phaseNumber}
