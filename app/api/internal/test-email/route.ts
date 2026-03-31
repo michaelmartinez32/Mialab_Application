@@ -81,7 +81,11 @@ export async function POST() {
       hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
     })
 
-    // Generate the real PDF using the real generator — same as production flow
+    console.log('[internal/test-email] applicationId:', testApplicationId)
+    console.log('[internal/test-email] formData.shippingSameAsBilling:', TEST_FORM_DATA.shippingSameAsBilling)
+    console.log('[internal/test-email] formData keys:', Object.keys(TEST_FORM_DATA).join(', '))
+
+    // Generate the real PDF using the real generator
     const pdfBlob = await generateApplicationPDF({
       formData: TEST_FORM_DATA,
       applicationId: testApplicationId,
@@ -91,13 +95,14 @@ export async function POST() {
     const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
     const pdfBase64 = pdfBuffer.toString('base64')
 
-    // Build the internal notification email using the real template
-    const emailHtml = generateInternalNotificationEmail(
-      TEST_FORM_DATA,
-      testApplicationId,
-      submittedAt,
-      'typed'
-    )
+    // Call with the correct object shape — matches the real submit route exactly
+    const emailHtml = generateInternalNotificationEmail({
+      applicationId: testApplicationId,
+      submissionDate: submittedAt,
+      formData: TEST_FORM_DATA,
+      signatureType: 'typed',
+      resaleCertificateUploaded: false,
+    })
 
     // Send only to internal address — no customer email, no DB write
     const internalEmail = getMialabInternalEmail()
