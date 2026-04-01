@@ -25,8 +25,8 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     RH:           isEs ? 4.0  : 4.5,   // standard row height (mm)
     SEC_PRE:      isEs ? 1.8  : 2.5,   // vertical gap before section title
     SEC_POST:     isEs ? 3.5  : 4.5,   // vertical gap after section divider line
-    AGR_FONT:     isEs ? 5.6  : 5.9,   // agreement paragraph font size
-    AGR_LH:       isEs ? 2.55 : 2.75,  // agreement line height (mm)
+    AGR_FONT:     isEs ? 6.2  : 5.9,   // agreement paragraph font size
+    AGR_LH:       isEs ? 2.72 : 2.75,  // agreement line height (mm)
     AGR_PARA_GAP: isEs ? 0.5  : 0.9,   // gap between agreement paragraphs
     AGR_POST:     isEs ? 1.2  : 2.0,   // space after last agreement paragraph
     ACK_H_MIN:    isEs ? 3.8  : 4.3,   // min height per acknowledgement item
