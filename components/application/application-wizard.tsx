@@ -43,6 +43,13 @@ export function ApplicationWizard() {
     sessionStorage.setItem('mialab-lang', lang)
   }, [lang])
 
+  // Scroll to top after every step transition and after submission.
+  // Runs after React commits the new content to the DOM, so the scroll
+  // always lands on the freshly-rendered step — not the previous one.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentStep, isSubmitted])
+
   const T = translations[lang]
 
   const updateFormData = useCallback((data: Partial<ApplicationFormData>) => {
@@ -223,13 +230,11 @@ export function ApplicationWizard() {
       await handleSubmit()
     } else {
       setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS))
-      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
   const handlePrevious = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   if (isSubmitted && submissionResult) {
