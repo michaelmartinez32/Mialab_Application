@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
   billing_zip TEXT NOT NULL,
   ap_contact_name TEXT NOT NULL,
   ap_email TEXT NOT NULL,
+  monthly_statement_email_preference TEXT NOT NULL DEFAULT 'yes',
   shipping_same_as_billing BOOLEAN NOT NULL DEFAULT true,
   shipping_address_1 TEXT,
   shipping_address_2 TEXT,

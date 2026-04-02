@@ -221,6 +221,7 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
   fullRow(T.fields.billingAddress, billingStreet)
   fullRow(T.fields.cityStateZip, `${formData.billingCity}, ${formData.billingState}  ${formData.billingZip}`)
   dualRow(T.fields.apContact, formData.apContactName, T.fields.apEmail, formData.apEmail)
+  fullRow(T.fields.monthlyStatementEmail, formData.monthlyStatementEmailPreference)
 
   // ── SHIPPING INFORMATION ─────────────────────────────────────────────────────
   sectionHeader(T.sections.shipping)

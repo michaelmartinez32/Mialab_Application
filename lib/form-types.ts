@@ -19,6 +19,7 @@ export interface ApplicationFormData {
   billingZip: string
   apContactName: string
   apEmail: string
+  monthlyStatementEmailPreference: string
 
   // Step 3 - Shipping Information
   shippingSameAsBilling: boolean
@@ -96,6 +97,7 @@ export const initialFormData: ApplicationFormData = {
   billingZip: '',
   apContactName: '',
   apEmail: '',
+  monthlyStatementEmailPreference: 'yes',
 
   // Step 3
   shippingSameAsBilling: true,

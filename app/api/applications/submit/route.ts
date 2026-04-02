@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
         billing_zip: formData.billingZip,
         ap_contact_name: formData.apContactName,
         ap_email: formData.apEmail,
+        monthly_statement_email_preference: formData.monthlyStatementEmailPreference,
         shipping_same_as_billing: formData.shippingSameAsBilling,
         shipping_address_1: formData.shippingSameAsBilling ? null : formData.shippingAddress1,
         shipping_address_2: formData.shippingSameAsBilling ? null : formData.shippingAddress2,

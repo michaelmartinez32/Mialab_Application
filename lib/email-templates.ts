@@ -176,6 +176,7 @@ export function generateInternalNotificationEmail({
                 ${formatLabel('Billing Address', billingAddress)}
                 ${formatLabel('Accounts Payable Contact', formData.apContactName)}
                 ${formatLabel('Accounts Payable Email', formData.apEmail)}
+                ${formatLabel('Monthly Statement by Email', formData.monthlyStatementEmailPreference)}
               </table>
               
               <!-- Shipping Section -->

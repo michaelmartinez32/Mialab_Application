@@ -89,6 +89,7 @@ export function ApplicationWizard() {
         if (!formData.apContactName.trim()) newErrors.apContactName = V.apContactRequired
         if (!formData.apEmail.trim()) newErrors.apEmail = V.apEmailRequired
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.apEmail)) newErrors.apEmail = V.emailInvalid
+        if (!formData.monthlyStatementEmailPreference) newErrors.monthlyStatementEmailPreference = V.monthlyStatementEmailRequired
         break
       case 3:
         if (!formData.shippingSameAsBilling) {
