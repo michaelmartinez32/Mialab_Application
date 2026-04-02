@@ -158,7 +158,7 @@ export function Step2BillingInfo({ formData, updateFormData, errors, lang }: Ste
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="mt-6 space-y-3">
             <Label className="text-[#474748]">
               {T.monthlyStatementEmailLabel} <span className="text-red-500">*</span>
             </Label>
