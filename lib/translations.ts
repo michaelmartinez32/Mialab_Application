@@ -76,7 +76,7 @@ const en = {
     apContactNamePlaceholder: 'Accounts payable contact name',
     apEmailLabel: 'Contact Email',
     apEmailPlaceholder: 'ap@practice.com',
-    monthlyStatementEmailLabel: 'Would you like your monthly statement emailed to you?',
+    monthlyStatementEmailLabel: 'Would you like to receive your monthly statement by email?',
     monthlyStatementYes: 'Yes',
     monthlyStatementNo: 'No',
   },
