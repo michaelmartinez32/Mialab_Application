@@ -165,7 +165,7 @@ export function Step2BillingInfo({ formData, updateFormData, errors, lang }: Ste
             <RadioGroup
               value={formData.monthlyStatementEmailPreference}
               onValueChange={(value) => updateFormData({ monthlyStatementEmailPreference: value })}
-              className="space-y-2"
+              className="flex flex-col gap-2 sm:flex-row sm:gap-4"
             >
               <div className="flex items-center space-x-3 rounded-lg border p-3 transition-colors hover:bg-gray-50">
                 <RadioGroupItem value="yes" id="monthly-statement-yes" />
