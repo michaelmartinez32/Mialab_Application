@@ -167,13 +167,13 @@ export function Step2BillingInfo({ formData, updateFormData, errors, lang }: Ste
               onValueChange={(value) => updateFormData({ monthlyStatementEmailPreference: value })}
               className="flex flex-col gap-2 sm:flex-row sm:gap-4"
             >
-              <div className="flex items-center space-x-3 rounded-lg border py-2 px-3 sm:p-3 transition-colors hover:bg-gray-50">
+              <div className="flex h-9 items-center space-x-3 rounded-md border px-3 transition-colors hover:bg-gray-50">
                 <RadioGroupItem value="yes" id="monthly-statement-yes" />
                 <Label htmlFor="monthly-statement-yes" className="cursor-pointer font-normal">
                   {T.monthlyStatementYes}
                 </Label>
               </div>
-              <div className="flex items-center space-x-3 rounded-lg border py-2 px-3 sm:p-3 transition-colors hover:bg-gray-50">
+              <div className="flex h-9 items-center space-x-3 rounded-md border px-3 transition-colors hover:bg-gray-50">
                 <RadioGroupItem value="no" id="monthly-statement-no" />
                 <Label htmlFor="monthly-statement-no" className="cursor-pointer font-normal">
                   {T.monthlyStatementNo}
