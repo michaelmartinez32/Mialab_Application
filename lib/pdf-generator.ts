@@ -220,7 +220,10 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     (formData.billingAddress2 ? `  ${formData.billingAddress2}` : '')
   fullRow(T.fields.billingAddress, billingStreet)
   dualRow(T.fields.cityStateZip, `${formData.billingCity}, ${formData.billingState}  ${formData.billingZip}`, T.fields.apContact, formData.apContactName)
-  dualRow(T.fields.monthlyStatementEmail, formData.monthlyStatementEmailPreference, T.fields.apEmail, formData.apEmail)
+  const monthlyStmtDisplay = formData.monthlyStatementEmailPreference === 'yes'
+    ? (isEs ? 'Sí' : 'Yes')
+    : formData.monthlyStatementEmailPreference === 'no' ? 'No' : formData.monthlyStatementEmailPreference
+  dualRow(T.fields.monthlyStatementEmail, monthlyStmtDisplay, T.fields.apEmail, formData.apEmail)
 
   // ── SHIPPING INFORMATION ─────────────────────────────────────────────────────
   sectionHeader(T.sections.shipping)

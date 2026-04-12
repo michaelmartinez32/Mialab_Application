@@ -720,7 +720,7 @@ const es: typeof en = {
       cityStateZip: 'Ciudad, Estado, C.P.',
       apContact: 'Contacto C×P',
       apEmail: 'Correo C×P',
-      monthlyStatementEmail: 'Estado de Cuenta Mensual por Correo',
+      monthlyStatementEmail: 'Statement Mensual Emailed',
       shippingAddress: 'Dirección de Envío',
       sameAsBilling: 'Igual que dirección de facturación',
       taxId: 'ID Fiscal / EIN',
