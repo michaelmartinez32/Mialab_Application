@@ -127,6 +127,26 @@ export async function POST(request: NextRequest) {
 
     const applicationId = application.id
 
+    // 1b. Try to persist additional locations data (requires DB columns —
+    //     non-fatal if the columns don't exist yet; data is in the PDF).
+    if (formData.hasMultipleLocations || formData.additionalLocations?.length) {
+      const { error: mlError } = await supabase
+        .from('applications')
+        .update({
+          has_multiple_locations: formData.hasMultipleLocations || null,
+          additional_locations: formData.additionalLocations?.length
+            ? formData.additionalLocations
+            : null,
+        })
+        .eq('id', applicationId)
+      if (mlError) {
+        console.log(
+          `[submit:${applicationId}] additional_locations not saved to DB (columns may not exist yet):`,
+          mlError.message
+        )
+      }
+    }
+
     // 2. Log draft creation in audit trail
     await supabase.from('application_audit_trail').insert({
       application_id: applicationId,

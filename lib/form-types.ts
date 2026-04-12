@@ -1,3 +1,16 @@
+export interface AdditionalLocation {
+  sameBusinessName: boolean
+  locationName: string
+  address1: string
+  address2: string
+  city: string
+  state: string
+  zip: string
+  contactPerson: string
+  phone: string
+  email: string
+}
+
 export interface ApplicationFormData {
   // Step 1 - Practice Information
   practiceName: string
@@ -28,6 +41,10 @@ export interface ApplicationFormData {
   shippingCity: string
   shippingState: string
   shippingZip: string
+
+  // Step 3 - Multiple Locations
+  hasMultipleLocations: string
+  additionalLocations: AdditionalLocation[]
 
   // Step 4 - Business Details
   taxId: string
@@ -106,6 +123,8 @@ export const initialFormData: ApplicationFormData = {
   shippingCity: '',
   shippingState: '',
   shippingZip: '',
+  hasMultipleLocations: '',
+  additionalLocations: [],
 
   // Step 4
   taxId: '',

@@ -184,7 +184,23 @@ export function generateInternalNotificationEmail({
               <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
                 ${formatLabel('Shipping Address', shippingAddress)}
               </table>
-              
+
+              ${formData.hasMultipleLocations === 'yes' && formData.additionalLocations?.length ? `
+              <!-- Additional Locations Section -->
+              <h2 style="margin: 0 0 15px; padding-bottom: 10px; border-bottom: 2px solid #b40000; color: #b40000; font-size: 16px;">Additional Locations (${formData.additionalLocations.length})</h2>
+              ${formData.additionalLocations.map((loc, i) => `
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                <tr><td colspan="2" style="padding: 6px 12px; color: #474748; font-size: 13px; font-weight: bold; background-color: #f8f8f8; border-radius: 4px;">Location ${i + 1}</td></tr>
+                ${formatLabel('Name', loc.sameBusinessName ? formData.practiceName : (loc.locationName || 'N/A'))}
+                ${formatLabel('Address', [loc.address1, loc.address2].filter(Boolean).join(', '))}
+                ${formatLabel('City, State, ZIP', [loc.city, loc.state, loc.zip].filter(Boolean).join(', '))}
+                ${loc.contactPerson ? formatLabel('Contact Person', loc.contactPerson) : ''}
+                ${loc.phone ? formatLabel('Phone', loc.phone) : ''}
+                ${loc.email ? formatLabel('Email', loc.email) : ''}
+              </table>
+              `).join('')}
+              ` : ''}
+
               <!-- Business Details Section -->
               <h2 style="margin: 0 0 15px; padding-bottom: 10px; border-bottom: 2px solid #b40000; color: #b40000; font-size: 16px;">Business Details</h2>
               <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">

@@ -24,6 +24,7 @@ const TEST_FORM_DATA: ApplicationFormData = {
   billingZip: '33146',
   apContactName: 'Carmen Ortega',
   apEmail: 'billing@sunshineeye.com',
+  monthlyStatementEmailPreference: 'yes',
 
   shippingSameAsBilling: true,
   shippingAddress1: '',
@@ -31,6 +32,8 @@ const TEST_FORM_DATA: ApplicationFormData = {
   shippingCity: '',
   shippingState: '',
   shippingZip: '',
+  hasMultipleLocations: '',
+  additionalLocations: [],
 
   taxId: '59-1234567',
   numberOfLocations: '2',

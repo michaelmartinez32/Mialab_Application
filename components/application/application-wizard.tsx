@@ -98,6 +98,16 @@ export function ApplicationWizard() {
           if (!formData.shippingState) newErrors.shippingState = V.stateRequired
           if (!formData.shippingZip.trim()) newErrors.shippingZip = V.zipRequired
         }
+        if (formData.hasMultipleLocations === 'yes') {
+          ;(formData.additionalLocations || []).forEach((loc, idx) => {
+            if (!loc.sameBusinessName && !loc.locationName.trim())
+              newErrors[`loc_${idx}_locationName`] = V.pleaseSelectOption
+            if (!loc.address1.trim()) newErrors[`loc_${idx}_address1`] = V.billingAddress1Required
+            if (!loc.city.trim()) newErrors[`loc_${idx}_city`] = V.cityRequired
+            if (!loc.state) newErrors[`loc_${idx}_state`] = V.stateRequired
+            if (!loc.zip.trim()) newErrors[`loc_${idx}_zip`] = V.zipRequired
+          })
+        }
         break
       case 4:
         if (!formData.taxId.trim()) newErrors.taxId = V.taxIdRequired

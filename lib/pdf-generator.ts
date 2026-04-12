@@ -239,6 +239,31 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
     if (shipCSZ) fullRow(T.fields.cityStateZip, shipCSZ)
   }
 
+  // ── ADDITIONAL LOCATIONS ─────────────────────────────────────────────────────
+  if (formData.hasMultipleLocations === 'yes' && formData.additionalLocations?.length) {
+    sectionHeader(isEs ? 'Sucursales Adicionales' : 'Additional Locations')
+    for (let i = 0; i < formData.additionalLocations.length; i++) {
+      const loc = formData.additionalLocations[i]
+      const locLabel = isEs ? `Sucursal ${i + 1}` : `Location ${i + 1}`
+      const locName = loc.sameBusinessName
+        ? formData.practiceName
+        : loc.locationName || '—'
+      fullRow(locLabel, locName)
+      const locStreet = loc.address1 + (loc.address2 ? `  ${loc.address2}` : '')
+      fullRow(isEs ? 'Dirección' : 'Address', locStreet || '—')
+      const locCSZ = [loc.city, loc.state, loc.zip].filter(Boolean).join(', ')
+      if (locCSZ) fullRow(isEs ? 'Ciudad, Estado, C.P.' : 'City, State, ZIP', locCSZ)
+      if (loc.contactPerson) {
+        dualRow(
+          isEs ? 'Persona de Contacto' : 'Contact Person', loc.contactPerson,
+          isEs ? 'Teléfono' : 'Phone', loc.phone || '—'
+        )
+      }
+      if (loc.email) fullRow(isEs ? 'Correo' : 'Email', loc.email)
+      if (i < formData.additionalLocations.length - 1) y += 2
+    }
+  }
+
   // ── BUSINESS DETAILS ─────────────────────────────────────────────────────────
   sectionHeader(T.sections.businessDetails)
 
