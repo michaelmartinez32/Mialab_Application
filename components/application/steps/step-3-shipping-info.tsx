@@ -81,7 +81,7 @@ export function Step3ShippingInfo({ formData, updateFormData, errors, lang }: St
     <>
       {/* ── SHIPPING INFORMATION (unchanged) ─────────────────────────────── */}
       <Card className="premium-card border-0">
-        <CardHeader className="pb-6">
+        <CardHeader className="pb-3">
           <CardTitle className="text-2xl font-semibold text-[#b40000]">
             {T.title}
           </CardTitle>
@@ -200,7 +200,7 @@ export function Step3ShippingInfo({ formData, updateFormData, errors, lang }: St
 
       {/* ── MULTIPLE LOCATIONS ───────────────────────────────────────────── */}
       <Card className="premium-card border-0 mt-6">
-        <CardHeader className="pb-6">
+        <CardHeader className="pb-3">
           <CardTitle className="text-2xl font-semibold text-[#b40000]">
             {ML.title}
           </CardTitle>
@@ -413,6 +413,11 @@ export function Step3ShippingInfo({ formData, updateFormData, errors, lang }: St
               </Button>
             </div>
           )}
+
+          {/* Disclaimer — always at the bottom of the card */}
+          <p className="mt-4 text-xs text-emerald-600">
+            A unique Mialab account number and login will be created for each location.
+          </p>
         </CardContent>
       </Card>
     </>
