@@ -1,6 +1,8 @@
 export interface AdditionalLocation {
   sameBusinessName: boolean
   locationName: string
+  sameEin: boolean
+  ein: string
   address1: string
   address2: string
   city: string

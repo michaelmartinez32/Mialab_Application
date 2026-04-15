@@ -192,6 +192,7 @@ export function generateInternalNotificationEmail({
               <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
                 <tr><td colspan="2" style="padding: 6px 12px; color: #474748; font-size: 13px; font-weight: bold; background-color: #f8f8f8; border-radius: 4px;">Location ${i + 1}</td></tr>
                 ${formatLabel('Name', loc.sameBusinessName ? formData.practiceName : (loc.locationName || 'N/A'))}
+                ${formatLabel('FEI/EIN', loc.sameEin ? (formData.taxId || 'N/A') : (loc.ein || 'N/A'))}
                 ${formatLabel('Address', [loc.address1, loc.address2].filter(Boolean).join(', '))}
                 ${formatLabel('City, State, ZIP', [loc.city, loc.state, loc.zip].filter(Boolean).join(', '))}
                 ${loc.contactPerson ? formatLabel('Contact Person', loc.contactPerson) : ''}

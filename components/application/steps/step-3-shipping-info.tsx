@@ -27,6 +27,8 @@ interface Step3Props {
 const EMPTY_LOCATION: AdditionalLocation = {
   sameBusinessName: true,
   locationName: '',
+  sameEin: true,
+  ein: '',
   address1: '',
   address2: '',
   city: '',
@@ -282,6 +284,37 @@ export function Step3ShippingInfo({ formData, updateFormData, errors, lang }: St
                       {errors[`loc_${idx}_locationName`] && (
                         <p className="text-sm text-red-500">{errors[`loc_${idx}_locationName`]}</p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Same FEI/EIN checkbox */}
+                  <div className="flex items-center space-x-3 rounded-lg border bg-gray-50 p-3">
+                    <Checkbox
+                      id={`loc-same-ein-${idx}`}
+                      checked={loc.sameEin}
+                      onCheckedChange={(checked) =>
+                        updateLocation(idx, 'sameEin', checked === true)
+                      }
+                    />
+                    <Label
+                      htmlFor={`loc-same-ein-${idx}`}
+                      className="cursor-pointer font-normal text-[#474748] text-sm"
+                    >
+                      {ML.sameEinLabel}
+                    </Label>
+                  </div>
+
+                  {/* FEI/EIN — only if different from main account */}
+                  {!loc.sameEin && (
+                    <div className="space-y-2">
+                      <Label className="text-[#474748]">
+                        {ML.einLabel}
+                      </Label>
+                      <Input
+                        value={loc.ein}
+                        onChange={(e) => updateLocation(idx, 'ein', e.target.value)}
+                        placeholder={ML.einPlaceholder}
+                      />
                     </div>
                   )}
 

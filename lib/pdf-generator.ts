@@ -249,6 +249,8 @@ export async function generateApplicationPDF(options: PDFGeneratorOptions): Prom
         ? formData.practiceName
         : loc.locationName || '—'
       fullRow(locLabel, locName)
+      const locEin = loc.sameEin ? formData.taxId : (loc.ein || '—')
+      fullRow('FEI/EIN', locEin || '—')
       const locStreet = loc.address1 + (loc.address2 ? `  ${loc.address2}` : '')
       fullRow(isEs ? 'Dirección' : 'Address', locStreet || '—')
       const locCSZ = [loc.city, loc.state, loc.zip].filter(Boolean).join(', ')
