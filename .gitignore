@@ -19,3 +19,9 @@ node_modules/
 .next/
 .DS_Store
 .vercel
+*.tsbuildinfo
+node_modules/
+.next/
+dist/
+.env
+*.log
